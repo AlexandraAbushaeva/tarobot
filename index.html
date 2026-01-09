@@ -110,10 +110,20 @@
         }
 
         function sendData() {
-            const resultString = selectedCards.join(", ");
-            tg.sendData("Выбраны карты: " + resultString);
-            tg.close();
-        }
+    const resultString = selectedCards.join(", ");
+    
+    // Показываем встроенную кнопку Telegram для надежности
+    tg.MainButton.text = "Подтвердить выбор";
+    tg.MainButton.show();
+    
+    tg.MainButton.onClick(function() {
+        tg.sendData("Выбраны карты: " + resultString);
+        tg.close();
+    });
+    
+    // Или пробуем прямой вызов еще раз
+    tg.sendData("Выбраны карты: " + resultString);
+}
     </script>
 </body>
 </html>
