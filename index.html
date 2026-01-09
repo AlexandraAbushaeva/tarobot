@@ -43,31 +43,22 @@
     const userId = tg.initDataUnsafe?.user?.id;
     const cardsText = "Выбраны карты: " + selected.join(", ");
 
-    // Строим URL строго по вашей инструкции
-    const url = `https://leadconverter.ru/api/v1/${apiToken}/messages.send`;
+    // Формируем URL с параметрами прямо в строке
+    // Это гарантирует, что сервер их "прочитает" даже без JSON-обработки
+    const url = `https://leadconverter.ru/api/v1/${apiToken}/messages.send?recipient=${userId}&message=${encodeURIComponent(cardsText)}`;
 
     try {
-        // Используем более простую отправку, которую не заблокирует браузер
         fetch(url, {
             method: 'POST',
-            mode: 'no-cors', // Это уберет ошибку "Сбой сети"
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                "recipient": userId,
-                "message": cardsText
-            })
+            mode: 'no-cors' 
         });
 
-        // Мы не ждем ответа (так как no-cors его скрывает), 
-        // просто верим, что данные ушли, и закрываемся через секунду
         setTimeout(() => {
             tg.close();
-        }, 500);
+        }, 600);
 
     } catch (e) {
-        alert("Ошибка! Проверьте токен в коде.");
+        alert("Ошибка отправки");
     }
 }
     </script>
