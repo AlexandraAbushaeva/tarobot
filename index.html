@@ -1,72 +1,75 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            font-family: sans-serif;
-            background-color: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
-            text-align: center;
-            padding-top: 50px;
+        body { font-family: sans-serif; text-align: center; background: #fff; padding: 20px; }
+        .deck { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
+        .card { 
+            width: 50px; height: 80px; background: #2c3e50; color: white;
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 20px; border: 2px solid transparent;
         }
-        .deck { display: flex; justify-content: center; gap: 10px; }
-        .card {
-            width: 60px; height: 90px;
-            background: #2c3e50; border: 2px solid #fff;
-            border-radius: 10px; color: white;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem; cursor: pointer; transition: 0.3s;
-        }
-        .card.selected {
-            transform: translateY(-15px);
-            background: #3498db;
+        .card.selected { border-color: #3498db; background: #3498db; transform: translateY(-10px); }
+        #fallback-btn { 
+            display: none; margin-top: 30px; padding: 15px 25px; 
+            background: #248b65; color: white; border: none; border-radius: 10px; font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <div id="status">Выберите 3 карты</div>
+    <h3 id="status">Выберите 3 карты</h3>
     <div class="deck">
-        <div class="card" onclick="select(this, '1')">?</div>
-        <div class="card" onclick="select(this, '2')">?</div>
-        <div class="card" onclick="select(this, '3')">?</div>
-        <div class="card" onclick="select(this, '4')">?</div>
-        <div class="card" onclick="select(this, '5')">?</div>
+        <div class="card" onclick="select(this, 'Маг')">?</div>
+        <div class="card" onclick="select(this, 'Жрица')">?</div>
+        <div class="card" onclick="select(this, 'Мир')">?</div>
+        <div class="card" onclick="select(this, 'Шут')">?</div>
+        <div class="card" onclick="select(this, 'Луна')">?</div>
     </div>
+    
+    <button id="fallback-btn" onclick="send()">ПОДТВЕРДИТЬ</button>
 
     <script>
         let tg = window.Telegram.WebApp;
         let selected = [];
         tg.expand();
+        tg.ready();
 
-        // Настройка главной кнопки Telegram
-        tg.MainButton.setText("ПОДТВЕРДИТЬ ВЫБОР");
-        tg.MainButton.textColor = "#FFFFFF";
-        tg.MainButton.color = "#2cab37";
-
-        function select(el, id) {
-            if (selected.includes(id)) {
-                selected = selected.filter(i => i !== id);
+        function select(el, name) {
+            if (selected.includes(name)) {
+                selected = selected.filter(i => i !== name);
                 el.classList.remove('selected');
             } else if (selected.length < 3) {
-                selected.push(id);
+                selected.push(name);
                 el.classList.add('selected');
             }
 
+            const btn = document.getElementById('fallback-btn');
             if (selected.length === 3) {
-                tg.MainButton.show(); // Показываем системную кнопку
+                btn.style.display = 'inline-block'; // Показываем обычную кнопку
+                tg.MainButton.setText("ОТПРАВИТЬ: " + selected.join(", "));
+                tg.MainButton.show(); // Показываем кнопку Telegram
             } else {
+                btn.style.display = 'none';
                 tg.MainButton.hide();
             }
         }
 
-        // Обработка нажатия на системную кнопку
-        tg.onEvent('mainButtonClicked', function() {
-            tg.sendData("Выбраны карты: " + selected.join(", "));
-            tg.close();
-        });
+        function send() {
+            const result = "Выбраны карты: " + selected.join(", ");
+            try {
+                tg.sendData(result);
+                // Если мы здесь, значит попытка отправки была
+                setTimeout(() => tg.close(), 100);
+            } catch (e) {
+                alert("Ошибка! Попробуйте открыть через кнопку ИГРА");
+            }
+        }
+
+        // Привязываем функцию к кнопке Telegram
+        tg.onEvent('mainButtonClicked', send);
     </script>
 </body>
 </html>
