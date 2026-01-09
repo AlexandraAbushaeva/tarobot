@@ -1,73 +1,153 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Выбор карт</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; }
-        .deck { display: flex; justify-content: center; gap: 10px; }
-        .card { width: 55px; height: 85px; background: #2c3e50; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .selected { background: #3498db; transform: translateY(-10px); }
-        #send-btn { margin-top: 30px; padding: 15px; width: 100%; background: #248b65; color: white; border: none; border-radius: 10px; display: none; }
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 400px;
+        }
+        .cards {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .card {
+            width: 60px;
+            height: 90px;
+            background-color: #34495e;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .card.selected {
+            background-color: #3498db;
+            transform: translateY(-10px);
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:disabled {
+            background-color: #bdc3c7;
+        }
+        #debug-info {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #7f8c8d;
+            min-height: 1.2em;
+        }
     </style>
 </head>
 <body>
-    <h3>Выбери 3 карты</h3>
-    <div class="deck">
-        <div class="card" onclick="select(this, 'Маг')">?</div>
-        <div class="card" onclick="select(this, 'Мир')">?</div>
-        <div class="card" onclick="select(this, 'Шут')">?</div>
-        <div class="card" onclick="select(this, 'Сила')">?</div>
-        <div class="card" onclick="select(this, 'Луна')">?</div>
-    </div>
-    <button id="send-btn" onclick="sendToLeadConverter()">ПОДТВЕРДИТЬ</button>
 
-    <script>
-        let tg = window.Telegram.WebApp;
-        let selected = [];
-        tg.expand();
+<div class="container">
+    <h2>Выбери 3 карты</h2>
+    <div class="cards" id="card-container">
+        </div>
+    <button id="confirm-btn" disabled onclick="sendToLeadConverter()">Подтвердить</button>
+    <div id="debug-info"></div>
+</div>
 
-        function select(el, name) {
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    // Список названий карт (можешь заменить на свои)
+    const cardNames = ["Маг", "Жрица", "Императрица", "Император", "Жрец"];
+    let selected = [];
+
+    const container = document.getElementById('card-container');
+    const btn = document.getElementById('confirm-btn');
+    const debugInfo = document.getElementById('debug-info');
+
+    // Отрисовка карт
+    cardNames.forEach(name => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerText = '?';
+        card.onclick = () => {
             if (selected.includes(name)) {
-                selected = selected.filter(i => i !== name);
-                el.classList.remove('selected');
+                selected = selected.filter(c => c !== name);
+                card.classList.remove('selected');
             } else if (selected.length < 3) {
                 selected.push(name);
-                el.classList.add('selected');
+                card.classList.add('selected');
             }
-            document.getElementById('send-btn').style.display = selected.length === 3 ? 'block' : 'none';
+            
+            // Обновляем текст проверки под кнопкой
+            debugInfo.innerText = selected.length > 0 ? "Выбрано: " + selected.join(", ") : "";
+            btn.disabled = selected.length !== 3;
+        };
+        container.appendChild(card);
+    });
+
+    async function sendToLeadConverter() {
+        const apiToken = "LlIKUY9au0k9VCkP9RX8NqyU5Xu370Ua"; // ВСТАВЬ СЮДА СВОЙ ТОКЕН
+        const userId = tg.initDataUnsafe?.user?.id;
+        const cardsText = selected.join(", ");
+
+        // Метод для записи в переменную подписчика
+        const url = `https://leadconverter.ru/api/v1/${apiToken}/subscribers/${userId}/variables`;
+
+        debugInfo.innerText = "Сохраняю: " + cardsText + "...";
+        btn.disabled = true;
+
+        try {
+            // Отправляем данные методом POST (он часто надежнее PATCH для форм)
+            fetch(url, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    "vibor_kart": cardsText // Имя переменной как в LeadConverter
+                })
+            });
+
+            // Небольшая задержка перед закрытием, чтобы запрос успел вылететь
+            setTimeout(() => {
+                tg.close();
+            }, 1000);
+
+        } catch (e) {
+            debugInfo.innerText = "Ошибка связи. Попробуйте снова.";
+            btn.disabled = false;
         }
-
-async function sendToLeadConverter() {
-    const apiToken = "LlIKUY9au0k9VCkP9RX8NqyU5Xu370Ua"; 
-    const userId = tg.initDataUnsafe?.user?.id;
-    const cardsText = selected.join(", "); // Например: "Маг, Луна, Солнце"
-
-    // Метод PATCH обновляет данные в профиле, не отправляя сообщений
-    const url = `https://leadconverter.ru/api/v1/${apiToken}/subscribers/${userId}/variables`;
-
-    try {
-        fetch(url, {
-            method: 'PATCH',
-            mode: 'no-cors', 
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                "vibor_kart": cardsText 
-            })
-        });
-
-        // Просто закрываем приложение через мгновение
-        setTimeout(() => {
-            tg.close();
-        }, 500);
-
-    } catch (e) {
-        // Оставляем пустой catch, чтобы пользователь не видел ошибок, если интернет моргнул
-        tg.close();
     }
-}
-    </script>
+</script>
+
 </body>
 </html>
