@@ -38,16 +38,34 @@
             document.getElementById('send-btn').style.display = selected.length === 3 ? 'block' : 'none';
         }
 
-   function sendToLeadConverter() {
-    // 1. Собираем текст из выбранных карт
-    const cardsText = selected.join(", ");
+   async function sendToLeadConverter() {
+    const apiToken = "LlIKUY9au0k9VCkP9RX8NqyU5Xu370Ua"; 
+    const userId = tg.initDataUnsafe?.user?.id;
+    const cardsText = selected.join(", "); // Просто список карт без лишних слов
 
-    // 2. Используем стандартный метод Telegram
-    // Он отправит этот текст в чат боту ОТ ТВОЕГО ИМЕНИ
-    tg.sendData(cardsText); 
+    // URL для обновления переменных подписчика
+    const url = `https://leadconverter.ru/api/v1/${apiToken}/subscribers/${userId}/variables`;
 
-    // 3. Закрываем приложение
-    tg.close();
+    try {
+        await fetch(url, {
+            method: 'PATCH',
+            mode: 'no-cors', // Позволяет запросу пройти без ошибок безопасности
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                "vibor_kart": cardsText 
+            })
+        });
+
+        // Закрываем приложение через небольшую паузу
+        setTimeout(() => {
+            tg.close();
+        }, 600);
+
+    } catch (e) {
+        alert("Ошибка сохранения данных");
+    }
 }
     </script>
 </body>
