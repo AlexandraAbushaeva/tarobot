@@ -2,76 +2,56 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #fff; padding: 20px; }
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #fff; }
         .deck { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
-        .card { 
-            width: 50px; height: 80px; background: #2c3e50; color: white;
-            border-radius: 8px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 20px; border: 2px solid transparent;
-        }
-        .card.selected { border-color: #3498db; background: #3498db; transform: translateY(-10px); }
-        #fallback-btn { 
-            display: none; margin-top: 30px; padding: 15px 25px; 
-            background: #248b65; color: white; border: none; border-radius: 10px; font-weight: bold;
-        }
+        .card { width: 55px; height: 85px; background: #2c3e50; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 24px; }
+        .selected { background: #3498db; transform: translateY(-10px); border: 2px solid #2980b9; }
     </style>
 </head>
 <body>
-    <h3 id="status">Выберите 3 карты</h3>
+    <h3>Выберите 3 карты</h3>
     <div class="deck">
         <div class="card" onclick="select(this, 'Маг')">?</div>
-        <div class="card" onclick="select(this, 'Жрица')">?</div>
         <div class="card" onclick="select(this, 'Мир')">?</div>
         <div class="card" onclick="select(this, 'Шут')">?</div>
+        <div class="card" onclick="select(this, 'Сила')">?</div>
         <div class="card" onclick="select(this, 'Луна')">?</div>
     </div>
-    
-    <button id="fallback-btn" onclick="send()">ПОДТВЕРДИТЬ</button>
 
     <script>
         let tg = window.Telegram.WebApp;
         let selected = [];
         tg.expand();
-        tg.ready();
+        tg.ready(); // Критически важно для инициализации
 
-        function select(el, name) {
-            if (selected.includes(name)) {
-                selected = selected.filter(i => i !== name);
+        function select(el, id) {
+            if (selected.includes(id)) {
+                selected = selected.filter(i => i !== id);
                 el.classList.remove('selected');
             } else if (selected.length < 3) {
-                selected.push(name);
+                selected.push(id);
                 el.classList.add('selected');
             }
 
-            const btn = document.getElementById('fallback-btn');
             if (selected.length === 3) {
-                btn.style.display = 'inline-block'; // Показываем обычную кнопку
-                tg.MainButton.setText("ОТПРАВИТЬ: " + selected.join(", "));
-                tg.MainButton.show(); // Показываем кнопку Telegram
+                tg.MainButton.setText("ОТПРАВИТЬ КАРТЫ В ЧАТ");
+                tg.MainButton.show();
             } else {
-                btn.style.display = 'none';
                 tg.MainButton.hide();
             }
         }
 
-        function send() {
-    const result = "Выбраны карты: " + selected.join(", ");
-    
-    // Пытаемся отправить данные официально
-    tg.sendData(result);
-    
-    // Хак для конструкторов: принудительно закрываем и надеемся на sendData
-    // Если это не сработает, то конструктор требует настройки через Webhook (ваш скриншот с URL обработчика)
-    setTimeout(() => {
-        tg.close();
-    }, 200);
-}
-
-        // Привязываем функцию к кнопке Telegram
-        tg.onEvent('mainButtonClicked', send);
+        // Этот обработчик должен быть снаружи
+        tg.onEvent('mainButtonClicked', function() {
+            try {
+                tg.sendData("Выбраны карты: " + selected.join(", "));
+                tg.close();
+            } catch (e) {
+                alert("Ошибка: откройте через кнопку 'Игра'!");
+            }
+        });
     </script>
 </body>
 </html>
