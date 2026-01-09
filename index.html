@@ -38,28 +38,16 @@
             document.getElementById('send-btn').style.display = selected.length === 3 ? 'block' : 'none';
         }
 
-   async function sendToLeadConverter() {
-    const apiToken = "LlIKUY9au0k9VCkP9RX8NqyU5Xu370Ua"; 
-    const userId = tg.initDataUnsafe?.user?.id;
-    const cardsText = "Выбраны карты: " + selected.join(", ");
+   function sendToLeadConverter() {
+    // 1. Собираем текст из выбранных карт
+    const cardsText = selected.join(", ");
 
-    // Формируем URL с параметрами прямо в строке
-    // Это гарантирует, что сервер их "прочитает" даже без JSON-обработки
-    const url = `https://leadconverter.ru/api/v1/${apiToken}/messages.send?recipient=${userId}&message=${encodeURIComponent(cardsText)}`;
+    // 2. Используем стандартный метод Telegram
+    // Он отправит этот текст в чат боту ОТ ТВОЕГО ИМЕНИ
+    tg.sendData(cardsText); 
 
-    try {
-        fetch(url, {
-            method: 'POST',
-            mode: 'no-cors' 
-        });
-
-        setTimeout(() => {
-            tg.close();
-        }, 600);
-
-    } catch (e) {
-        alert("Ошибка отправки");
-    }
+    // 3. Закрываем приложение
+    tg.close();
 }
     </script>
 </body>
