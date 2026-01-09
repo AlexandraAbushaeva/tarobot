@@ -39,32 +39,33 @@
         }
 
         async function sendToLeadConverter() {
-    const apiToken = "LlIKUY9au0k9VCkP9RX8NqyU5Xu370Ua"; // Вставь новый токен сюда
+    const apiToken = "LlIKUY9au0k9VCkP9RX8NqyU5Xu370Ua"; // Тот самый длинный код
     const userId = tg.initDataUnsafe?.user?.id;
-    const cardsText = selected.join(", ");
+    const cardsText = "Выбраны карты: " + selected.join(", ");
 
-    // Формируем запрос согласно стандартам LeadConverter API
+    // Собираем правильный URL по инструкции
+    const url = `https://leadconverter.ru/api/v1/${apiToken}/messages.send`;
+
     try {
-        const response = await fetch(`https://api.leadconverter.ru/v1/subscribers/${userId}/variables`, {
-            method: 'PATCH', // Метод для обновления данных подписчика
+        const response = await fetch(url, {
+            method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiToken}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                // Мы записываем выбранные карты прямо в переменную профиля
-                "vibor_kart": cardsText 
+                "recipient": userId,
+                "message": cardsText
             })
         });
 
         if (response.ok) {
-            // Если данные записались, закрываем приложение
-            tg.close();
+            tg.close(); // Закрываем приложение, если всё ушло
         } else {
-            alert("Ошибка сервера: " + response.status);
+            const errorData = await response.json();
+            alert("Ошибка АПИ: " + JSON.stringify(errorData));
         }
     } catch (e) {
-        alert("Нет связи с сервером");
+        alert("Сбой сети. Проверьте интернет или токен.");
     }
 }
     </script>
