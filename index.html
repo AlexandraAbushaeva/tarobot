@@ -39,28 +39,34 @@
         }
 
         async function sendToLeadConverter() {
-            const apiToken = "LlIKUY9au0k9VCkP9RX8NqyU5Xu370Ua"; // Создай его в разделе API
-            const userId = tg.initDataUnsafe?.user?.id;
-            const resultString = "Выбраны карты: " + selected.join(", ");
+    const apiToken = "LlIKUY9au0k9VCkP9RX8NqyU5Xu370Ua"; // Вставь новый токен сюда
+    const userId = tg.initDataUnsafe?.user?.id;
+    const cardsText = selected.join(", ");
 
-            // Мы отправляем данные в LeadConverter через их API метод отправки сообщения или обновления данных
-            try {
-                await fetch(`https://api.leadconverter.ru/v1/messages/send`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiToken}`
-                    },
-                    body: JSON.stringify({
-                        recipient: userId,
-                        message: resultString
-                    })
-                });
-                tg.close();
-            } catch (e) {
-                alert("Ошибка при связи с LeadConverter");
-            }
+    // Формируем запрос согласно стандартам LeadConverter API
+    try {
+        const response = await fetch(`https://api.leadconverter.ru/v1/subscribers/${userId}/variables`, {
+            method: 'PATCH', // Метод для обновления данных подписчика
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiToken}`
+            },
+            body: JSON.stringify({
+                // Мы записываем выбранные карты прямо в переменную профиля
+                "vibor_kart": cardsText 
+            })
+        });
+
+        if (response.ok) {
+            // Если данные записались, закрываем приложение
+            tg.close();
+        } else {
+            alert("Ошибка сервера: " + response.status);
         }
+    } catch (e) {
+        alert("Нет связи с сервером");
+    }
+}
     </script>
 </body>
 </html>
