@@ -38,18 +38,18 @@
             document.getElementById('send-btn').style.display = selected.length === 3 ? 'block' : 'none';
         }
 
-   async function sendToLeadConverter() {
+async function sendToLeadConverter() {
     const apiToken = "LlIKUY9au0k9VCkP9RX8NqyU5Xu370Ua"; 
     const userId = tg.initDataUnsafe?.user?.id;
-    const cardsText = selected.join(", "); // Просто список карт без лишних слов
+    const cardsText = selected.join(", "); // Например: "Маг, Луна, Солнце"
 
-    // URL для обновления переменных подписчика
+    // Метод PATCH обновляет данные в профиле, не отправляя сообщений
     const url = `https://leadconverter.ru/api/v1/${apiToken}/subscribers/${userId}/variables`;
 
     try {
-        await fetch(url, {
+        fetch(url, {
             method: 'PATCH',
-            mode: 'no-cors', // Позволяет запросу пройти без ошибок безопасности
+            mode: 'no-cors', 
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -58,13 +58,14 @@
             })
         });
 
-        // Закрываем приложение через небольшую паузу
+        // Просто закрываем приложение через мгновение
         setTimeout(() => {
             tg.close();
-        }, 600);
+        }, 500);
 
     } catch (e) {
-        alert("Ошибка сохранения данных");
+        // Оставляем пустой catch, чтобы пользователь не видел ошибок, если интернет моргнул
+        tg.close();
     }
 }
     </script>
