@@ -58,15 +58,17 @@
         }
 
         function send() {
-            const result = "Выбраны карты: " + selected.join(", ");
-            try {
-                tg.sendData(result);
-                // Если мы здесь, значит попытка отправки была
-                setTimeout(() => tg.close(), 100);
-            } catch (e) {
-                alert("Ошибка! Попробуйте открыть через кнопку ИГРА");
-            }
-        }
+    const result = "Выбраны карты: " + selected.join(", ");
+    
+    // Пытаемся отправить данные официально
+    tg.sendData(result);
+    
+    // Хак для конструкторов: принудительно закрываем и надеемся на sendData
+    // Если это не сработает, то конструктор требует настройки через Webhook (ваш скриншот с URL обработчика)
+    setTimeout(() => {
+        tg.close();
+    }, 200);
+}
 
         // Привязываем функцию к кнопке Telegram
         tg.onEvent('mainButtonClicked', send);
