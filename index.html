@@ -15,115 +15,120 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
-            overflow: hidden;
         }
 
-        h2 { margin-bottom: 20px; font-size: 1.2rem; }
+        .status {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
 
         .deck {
             display: flex;
             gap: 10px;
-            perspective: 1000px;
+            margin-bottom: 30px;
         }
 
         .card {
             width: 60px;
             height: 90px;
             background: #2c3e50;
-            border: 2px solid white;
-            border-radius: 8px;
+            border: 2px solid #fff;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-weight: bold;
+            font-size: 1.5rem;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             user-select: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
+        /* Анимация при выборе */
         .card.selected {
-            background: #3498db;
-            transform: translateY(-20px) scale(1.1);
-            border-color: var(--tg-theme-button-color, #248b65);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            transform: translateY(-15px) rotate(3deg);
+            background: var(--tg-theme-button-color, #3498db);
+            border-color: #fff;
         }
 
-        #main-btn {
-            margin-top: 40px;
-            padding: 12px 24px;
+        #send-btn {
+            padding: 15px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
             background-color: var(--tg-theme-button-color, #248b65);
             color: var(--tg-theme-button-text-color, #ffffff);
-            border: none;
-            border-radius: 10px;
-            font-weight: bold;
-            display: none; /* Скрыта пока не выбрано 3 карты */
+            display: none; /* Скрыта по умолчанию */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
     </style>
 </head>
 <body>
 
-    <h2 id="status">Выберите 3 карты из 5</h2>
+    <div class="status" id="statusText">Выберите 3 карты</div>
 
     <div class="deck">
-        <div class="card" onclick="toggleCard(this, 'Туз')">?</div>
-        <div class="card" onclick="toggleCard(this, 'Король')">?</div>
-        <div class="card" onclick="toggleCard(this, 'Дама')">?</div>
-        <div class="card" onclick="toggleCard(this, 'Валет')">?</div>
-        <div class="card" onclick="toggleCard(this, '10-ка')">?</div>
+        <div class="card" onclick="selectCard(this, 'Карта 1')">?</div>
+        <div class="card" onclick="selectCard(this, 'Карта 2')">?</div>
+        <div class="card" onclick="selectCard(this, 'Карта 3')">?</div>
+        <div class="card" onclick="selectCard(this, 'Карта 4')">?</div>
+        <div class="card" onclick="selectCard(this, 'Карта 5')">?</div>
     </div>
 
-    <button id="main-btn" onclick="sendData()">Подтвердить выбор</button>
+    <button id="send-btn" onclick="finishSelection()">Подтвердить выбор</button>
 
     <script>
         let tg = window.Telegram.WebApp;
-        let selectedCards = [];
+        let selected = [];
+        
+        // Сообщаем Telegram, что приложение готово и его можно развернуть
+        tg.ready();
         tg.expand();
 
-        function toggleCard(element, cardName) {
-            const index = selectedCards.indexOf(cardName);
-            
+        function selectCard(element, cardName) {
+            const index = selected.indexOf(cardName);
+
             if (index > -1) {
-                // Убираем выделение
-                selectedCards.splice(index, 1);
+                // Если карта уже выбрана — отменяем выбор
+                selected.splice(index, 1);
                 element.classList.remove('selected');
                 element.innerText = "?";
             } else {
-                // Добавляем, если меньше 3-х
-                if (selectedCards.length < 3) {
-                    selectedCards.push(cardName);
+                // Если выбрано меньше 3, добавляем новую
+                if (selected.length < 3) {
+                    selected.push(cardName);
                     element.classList.add('selected');
                     element.innerText = "✓";
                 }
             }
 
-            // Показываем кнопку, если выбрано ровно 3
-            const btn = document.getElementById('main-btn');
-            if (selectedCards.length === 3) {
+            // Обновляем текст и видимость кнопки
+            const btn = document.getElementById('send-btn');
+            const status = document.getElementById('statusText');
+            
+            if (selected.length === 3) {
                 btn.style.display = 'block';
-                document.getElementById('status').innerText = "Готово!";
+                status.innerText = "Карты выбраны!";
             } else {
                 btn.style.display = 'none';
-                document.getElementById('status').innerText = `Выбрано: ${selectedCards.length} из 3`;
+                status.innerText = `Выбрано: ${selected.length} из 3`;
             }
         }
 
-        function sendData() {
-    const resultString = selectedCards.join(", ");
-    
-    // Показываем встроенную кнопку Telegram для надежности
-    tg.MainButton.text = "Подтвердить выбор";
-    tg.MainButton.show();
-    
-    tg.MainButton.onClick(function() {
-        tg.sendData("Выбраны карты: " + resultString);
-        tg.close();
-    });
-    
-    // Или пробуем прямой вызов еще раз
-    tg.sendData("Выбраны карты: " + resultString);
-}
+        function finishSelection() {
+            const dataToSend = "Выбраны карты: " + selected.join(", ");
+            
+            // Самый важный метод. Отправляет текст в чат боту.
+            // Работает ТОЛЬКО если приложение открыто через кнопку МЕНЮ (кнопка "Игра")
+            tg.sendData(dataToSend);
+            
+            // Закрываем приложение после отправки
+            tg.close();
+        }
     </script>
 </body>
 </html>
