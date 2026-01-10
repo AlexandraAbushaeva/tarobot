@@ -70,33 +70,35 @@
     });
 
     async function sendToLeadConverter() {
-    const apiToken = "ТВОЙ_ТОКЕН"; 
+    const apiToken = "LlIKUY9au0k9VCkP9RX8NqyU5Xu370Ua"; 
     const userId = tg.initDataUnsafe?.user?.id;
-    const cardsText = selected.join(", ");
+    const cardsText = selected.join(", "); 
 
-    // Формируем URL так, чтобы данные передавались как параметры (Query Parameters)
-    // Это самый "пробивной" метод для LeadConverter
-    const url = `https://leadconverter.ru/api/v1/${apiToken}/subscribers/${userId}/variables?vibor_kart=${encodeURIComponent(cardsText)}`;
+    // Ссылка для ПРЯМОЙ записи в переменную профиля
+    const url = `https://leadconverter.ru/api/v1/${apiToken}/subscribers/${userId}/variables`;
 
-    statusMsg.innerText = "Сохранение в профиль...";
-    btn.disabled = true;
+    statusMsg.innerText = "Сохраняю карты...";
 
     try {
-        // Отправляем пустой POST запрос, где все данные уже есть в самой ссылке
-        fetch(url, {
+        // Мы отправляем JSON, который LeadConverter понимает идеально
+        await fetch(url, {
             method: 'POST',
-            mode: 'no-cors'
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                "vibor_kart": cardsText // Имя переменной как в системе
+            })
         });
 
-        statusMsg.innerText = "Готово! Данные в переменной.";
-        
-        setTimeout(() => {
-            tg.close();
-        }, 1000);
+        statusMsg.innerText = "Сохранено!";
+        setTimeout(() => { tg.close(); }, 700);
 
     } catch (e) {
-        statusMsg.innerText = "Ошибка API. Проверь токен.";
-        btn.disabled = false;
+        // Если API капризничает, пробуем через URL-параметры (как в твоем "Действии")
+        const backupUrl = `${url}?vibor_kart=${encodeURIComponent(cardsText)}`;
+        fetch(backupUrl, { method: 'POST', mode: 'no-cors' });
+        setTimeout(() => { tg.close(); }, 700);
     }
 }
 </script>
