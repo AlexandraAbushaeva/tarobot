@@ -6,14 +6,15 @@
     <title>Выбор карт</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background-color: #f0f0f0; }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background-color: #f0f0f0; }
         .container { text-align: center; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 90%; max-width: 400px; }
         .cards { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
-        .card { width: 60px; height: 90px; background-color: #34495e; color: white; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; font-size: 20px; transition: transform 0.2s; }
-        .card.selected { background-color: #3498db; transform: translateY(-10px); }
-        button { padding: 10px 20px; font-size: 16px; background-color: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
-        button:disabled { background-color: #bdc3c7; }
-        #debug-info { margin-top: 15px; font-size: 12px; color: #7f8c8d; min-height: 1.2em; }
+        .card { width: 60px; height: 90px; background-color: #34495e; color: white; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; font-size: 20px; transition: transform 0.2s; border: 2px solid transparent; }
+        .card.selected { background-color: #3498db; transform: translateY(-10px); border-color: #2980b9; }
+        button { padding: 12px 20px; font-size: 16px; background-color: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
+        button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+        #selection-text { margin-top: 15px; font-size: 16px; color: #2c3e50; font-weight: bold; min-height: 1.5em; }
+        #status-msg { margin-top: 5px; font-size: 12px; color: #7f8c8d; }
     </style>
 </head>
 <body>
@@ -21,26 +22,32 @@
 <div class="container">
     <h2>Выбери 3 карты</h2>
     <div class="cards" id="card-container"></div>
-    <button id="confirm-btn" disabled onclick="sendToLeadConverter()">Подтвердить</button>
-    <div id="debug-info"></div>
+    
+    <div id="selection-text"></div>
+    
+    <button id="confirm-btn" disabled onclick="sendToLeadConverter()">Подтвердить выбор</button>
+    <div id="status-msg"></div>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
+    // Список твоих карт
     const cardNames = ["Маг", "Жрица", "Императрица", "Император", "Жрец"];
     let selected = [];
 
     const container = document.getElementById('card-container');
     const btn = document.getElementById('confirm-btn');
-    const debugInfo = document.getElementById('debug-info');
+    const selectionText = document.getElementById('selection-text');
+    const statusMsg = document.getElementById('status-msg');
 
-    // Создание карт
+    // Отрисовка карт
     cardNames.forEach(name => {
         const card = document.createElement('div');
         card.className = 'card';
         card.innerText = '?';
+        
         card.onclick = () => {
             if (selected.includes(name)) {
                 selected = selected.filter(c => c !== name);
@@ -49,26 +56,32 @@
                 selected.push(name);
                 card.classList.add('selected');
             }
-            // Выводим названия выбранных карт внизу для проверки
-            debugInfo.innerText = selected.length > 0 ? "Выбрано: " + selected.join(", ") : "";
+            
+            // ОБНОВЛЕНИЕ ТЕКСТА: происходит сразу при клике
+            if (selected.length > 0) {
+                selectionText.innerText = "Выбрано: " + selected.join(", ");
+            } else {
+                selectionText.innerText = "";
+            }
+            
             btn.disabled = selected.length !== 3;
         };
         container.appendChild(card);
     });
 
     async function sendToLeadConverter() {
-        const apiToken = "LlIKUY9au0k9VCkP9RX8NqyU5Xu370Ua"; // Вставь актуальный токен
+        const apiToken = "ТВОЙ_ТОКЕН"; // Вставь токен из image_3a02a6.png
         const userId = tg.initDataUnsafe?.user?.id;
         const cardsText = selected.join(", ");
 
-        // Используем метод PATCH для обновления переменных профиля
+        // Ссылка строго по инструкции из твоего файла image_39f724.png
         const url = `https://leadconverter.ru/api/v1/${apiToken}/subscribers/${userId}/variables`;
 
-        debugInfo.innerText = "Записываю в переменную...";
+        statusMsg.innerText = "Отправка данных...";
         btn.disabled = true;
 
         try {
-            // Отправляем данные. Используем POST как универсальный метод для API
+            // Используем POST, так как мы передаем данные в систему
             fetch(url, {
                 method: 'POST',
                 mode: 'no-cors', 
@@ -76,11 +89,14 @@
                 body: JSON.stringify({ "vibor_kart": cardsText })
             });
 
-            // Закрываем приложение через секунду, чтобы запрос успел уйти
-            setTimeout(() => { tg.close(); }, 1000);
+            statusMsg.innerText = "Успешно! Закрываю...";
+            
+            setTimeout(() => {
+                tg.close();
+            }, 800);
 
         } catch (e) {
-            debugInfo.innerText = "Ошибка записи. Попробуйте еще раз.";
+            statusMsg.innerText = "Ошибка. Попробуй еще раз.";
             btn.disabled = false;
         }
     }
