@@ -1,158 +1,66 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Выбор Карт для Ани</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f2f5;
-            color: #333;
-        }
-        .container {
-            text-align: center;
-            background: white;
-            padding: 30px;
-            border-radius: 25px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            width: 85%;
-            max-width: 400px;
-        }
-        h2 { margin-bottom: 20px; font-size: 20px; }
-        .grid {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 25px;
-        }
-        .card {
-            width: 70px;
-            height: 100px;
-            background: #2c3e50;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 28px;
-            border: 4px solid transparent;
-            transition: all 0.2s ease;
-        }
-        .card.selected {
-            background: #3498db;
-            border-color: #2980b9;
-            transform: scale(1.05);
-        }
-        #status-text {
-            height: 20px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            color: #3498db;
-            font-weight: bold;
-        }
-        #confirm-btn {
-            width: 100%;
-            padding: 16px;
-            background: #e0e0e0;
-            color: white;
-            border: none;
-            border-radius: 15px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        #confirm-btn.active {
-            background: #27ae60;
-            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
-        }
-        #confirm-btn:disabled { cursor: not-allowed; }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f0f2f5; }
+        .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 80%; text-align: center; }
+        .grid { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
+        .card { width: 60px; height: 90px; background: #2c3e50; color: white; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; font-size: 24px; border: 3px solid transparent; }
+        .card.selected { background: #3498db; border-color: #2980b9; }
+        #confirm-btn { width: 100%; padding: 15px; background: #ccc; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        #confirm-btn.active { background: #27ae60; }
     </style>
 </head>
 <body>
+    <div class="container">
+        <h3>Выберите 3 карты</h3>
+        <div class="grid" id="grid"></div>
+        <button id="confirm-btn" disabled>Подтвердить выбор</button>
+    </div>
 
-<div class="container">
-    <h2>Выберите 3 карты</h2>
-    <div class="grid" id="card-grid"></div>
-    <div id="status-text"></div>
-    <button id="confirm-btn" disabled>Подтвердить выбор</button>
-</div>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        const cardNames = ["Маг", "Жрица", "Императрица", "Император", "Жрец"];
+        let selected = [];
+        const grid = document.getElementById('grid');
+        const btn = document.getElementById('confirm-btn');
 
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.expand(); // Разворачиваем на весь экран
+        cardNames.forEach(name => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerText = '?';
+            card.onclick = () => {
+                if (selected.includes(name)) {
+                    selected = selected.filter(n => n !== name);
+                    card.classList.remove('selected');
+                } else if (selected.length < 3) {
+                    selected.push(name);
+                    card.classList.add('selected');
+                }
+                btn.disabled = selected.length !== 3;
+                btn.classList.toggle('active', selected.length === 3);
+            };
+            grid.appendChild(card);
+        });
 
-    const cardNames = ["Маг", "Жрица", "Императрица", "Император", "Жрец"];
-    let selected = [];
-
-    const grid = document.getElementById('card-grid');
-    const btn = document.getElementById('confirm-btn');
-    const status = document.getElementById('status-text');
-
-    // Отрисовка карт
-    cardNames.forEach(name => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerText = '?';
-        
-        card.onclick = () => {
-            if (selected.includes(name)) {
-                selected = selected.filter(n => n !== name);
-                card.classList.remove('selected');
-            } else if (selected.length < 3) {
-                selected.push(name);
-                card.classList.add('selected');
-            }
-
-            status.innerText = selected.length > 0 ? "Выбрано: " + selected.join(", ") : "";
+        btn.onclick = async () => {
+            const userId = tg.initDataUnsafe?.user?.id || "no_id";
+            const cards = selected.join(", ");
+            // ВСТАВЬ СЮДА СВОЮ ССЫЛКУ ИЗ ЛОГА ДО СЛОВА /exec
+            const scriptURL = "https://script.google.com/macros/s/AKfycbxhA-rBX7mIXP0mrCJD3HPnM670GCYLCIw5r_rwzESfQmmIp_vS6SiplTZBipil8OKmtA/exec";
             
-            if (selected.length === 3) {
-                btn.disabled = false;
-                btn.classList.add('active');
-            } else {
-                btn.disabled = true;
-                btn.classList.remove('active');
+            btn.innerText = "Сохранение...";
+            try {
+                await fetch(`${scriptURL}?user_id=${userId}&cards=${encodeURIComponent(cards)}`, { mode: 'no-cors' });
+                tg.close();
+            } catch (e) {
+                btn.innerText = "Ошибка";
             }
         };
-        grid.appendChild(card);
-    });
-
-    // Функция ПРЯМОЙ отправки данных в Google Script
-    async function sendDataDirectly() {
-        const cardsText = selected.join(", ");
-        // Получаем ID пользователя из Telegram
-        const userId = tg.initDataUnsafe?.user?.id || "no_id";
-        
-        // СЮДА ВСТАВЛЯЕШЬ ССЫЛКУ ИЗ GOOGLE SCRIPTS
-        const scriptURL = "https://script.google.com/macros/s/AKfycbxhA-rBX7mIXP0mrCJD3HPnM670GCYLCIw5r_rwzESfQmmIp_vS6SiplTZBipil8OKmtA/exec"; 
-        
-        // Формируем ссылку с данными
-        const finalURL = `${scriptURL}?user_id=${userId}&cards=${encodeURIComponent(cardsText)}`;
-
-        btn.innerText = "СОХРАНЯЕМ...";
-        btn.disabled = true;
-
-        try {
-            // Отправляем запрос. mode: 'no-cors' позволяет избежать блокировок браузера
-            await fetch(finalURL, { 
-                method: 'GET',
-                mode: 'no-cors' 
-            });
-            
-            btn.innerText = "ГОТОВО!";
-            btn.style.background = "#2ecc71";
-            
-            // Закрываем приложение через небольшую паузу
-            setTimeout(() => {
-                tg.close();
-            }, 800);
+    </script>
+</body>
+</html>
