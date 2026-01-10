@@ -63,15 +63,28 @@
         container.appendChild(card);
     });
 
-   function sendToLeadConverter() {
-    const cardsText = selected.join(", ");
+   async function sendToLeadConverter() {
+    const apiToken = "LlIKUY9au0k9VCkP9RX8NqyU5Xu370Ua"; 
+    const userId = tg.initDataUnsafe?.user?.id;
+    const cardsText = selected.join(", "); 
 
-    // Этот метод отправит текст "Маг, Жрица..." прямо в чат боту.
-    // Бот увидит это сообщение, и если у него настроено "Действие" 
-    // на ключевое слово или следующий шаг — он подхватит его.
-    tg.sendData(cardsText); 
+    // Ссылка для ПРЯМОЙ записи переменной в базу (самый надежный путь)
+    const url = `https://leadconverter.ru/api/v1/${apiToken}/subscribers/${userId}/variables?vibor_kart=${encodeURIComponent(cardsText)}`;
 
-    tg.close();
+    document.getElementById('selection-display').innerText = "Записываю: " + cardsText;
+
+    try {
+        // Код сам стучится в систему и обновляет переменную vibor_kart
+        fetch(url, { method: 'POST', mode: 'no-cors' });
+
+        document.getElementById('status-log').innerText = "✅ Сохранено в профиль!";
+        
+        setTimeout(() => {
+            tg.close();
+        }, 1000);
+    } catch (e) {
+        document.getElementById('status-log').innerText = "Ошибка API";
+    }
 }
 </script>
 </body>
