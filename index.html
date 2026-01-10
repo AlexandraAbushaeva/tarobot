@@ -5,55 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f2f5; }
-        .grid { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
-        .card { width: 65px; height: 95px; background: #2c3e50; color: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid transparent; font-size: 11px; }
-        .card.selected { background: #3498db; border-color: #2980b9; }
-        #btn { width: 100%; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 12px; font-weight: bold; display: none; }
-        #log { font-size: 10px; color: red; margin-top: 20px; }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f4f4f9; }
+        .grid { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 20px; }
+        .card { width: 70px; height: 100px; background: #2c3e50; color: white; display: flex; align-items: center; justify-content: center; border-radius: 10px; cursor: pointer; font-size: 11px; text-align: center; padding: 5px; border: 3px solid transparent; }
+        .card.selected { background: #3498db; border-color: #2980b9; transform: scale(1.05); }
+        #btn { width: 200px; padding: 15px; background: #ccc; border: none; border-radius: 12px; color: white; font-weight: bold; }
+        #btn.active { background: #27ae60; cursor: pointer; }
     </style>
 </head>
 <body>
-    <h3>Выбери 3 карты</h3>
+    <h3>Выберите 3 карты</h3>
     <div class="grid" id="grid"></div>
-    <button id="btn">ПОДТВЕРДИТЬ</button>
-    <div id="log"></div>
+    <button id="btn" disabled>ПОДТВЕРДИТЬ</button>
 
     <script>
-        try {
-            const tg = window.Telegram.WebApp;
-            tg.expand();
-            const names = ["Маг", "Жрица", "Императрица", "Император", "Жрец"];
-            let sel = [];
-            const grid = document.getElementById('grid');
-            const btn = document.getElementById('btn');
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        const names = ["Маг", "Жрица", "Императрица", "Император", "Жрец"];
+        let sel = [];
+        const grid = document.getElementById('grid');
+        const btn = document.getElementById('btn');
 
-            names.forEach(n => {
-                const c = document.createElement('div');
-                c.className = 'card'; c.innerText = n;
-                c.onclick = () => {
-                    if (sel.includes(n)) { sel = sel.filter(i => i !== n); c.classList.remove('selected'); }
-                    else if (sel.length < 3) { sel.push(n); c.classList.add('selected'); }
-                    btn.style.display = sel.length === 3 ? "block" : "none";
-                };
-                grid.appendChild(c);
-            });
-
-            btn.onclick = async () => {
-                const uid = tg.initDataUnsafe?.user?.id || "test";
-                const cards = sel.join(", ");
-                // ВСТАВЬ СВОЮ ССЫЛКУ НИЖЕ, НЕ УДАЛЯЯ КАВЫЧКИ
-                const scriptURL = "https://script.google.com/macros/s/AKfycbw98v0ljrOEGZU57RXHCvspl3NkpxMZYNzVKA1kvYFo34FUR3JpzyND8GnVet8p1GzSAg/exec"; 
-                
-                const finalURL = `${scriptURL}?user_id=${uid}&cards=${encodeURIComponent(cards)}&action=save`;
-                
-                btn.innerText = "СОХРАНЯЕМ...";
-                await fetch(finalURL, { mode: 'no-cors' });
-                tg.close();
+        names.forEach(n => {
+            const c = document.createElement('div');
+            c.className = 'card'; c.innerText = n;
+            c.onclick = () => {
+                if (sel.includes(n)) { sel = sel.filter(i => i !== n); c.classList.remove('selected'); }
+                else if (sel.length < 3) { sel.push(n); c.classList.add('selected'); }
+                btn.disabled = sel.length !== 3; btn.classList.toggle('active', sel.length === 3);
             };
-        } catch (e) {
-            document.getElementById('log').innerText = "Ошибка кода: " + e.message;
-        }
+            grid.appendChild(c);
+        });
+
+        btn.onclick = async () => {
+            const uid = tg.initDataUnsafe?.user?.id || "no_id";
+            const cards = sel.join(", ");
+            const scriptURL = "https://script.google.com/macros/s/AKfycbx_n1wfHw0V4PVQ2zdA-SyUMXZDNiOO28B3QGcUocaBUrIjfgGeQZdaNxurmqiK5zp4dA/exec"; 
+            
+            btn.innerText = "ОТПРАВКА...";
+            try {
+                // Магия: отправляем данные в скрипт, а он сам всё сделает
+                await fetch(`${scriptURL}?user_id=${uid}&cards=${encodeURIComponent(cards)}`, { mode: 'no-cors' });
+                tg.close();
+            } catch (e) {
+                btn.innerText = "ОШИБКА";
+            }
+        };
     </script>
 </body>
 </html>
