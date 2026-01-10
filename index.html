@@ -63,46 +63,16 @@
         container.appendChild(card);
     });
 
-    async function sendToLeadConverter() {
-        // --- ВСТАВЬ СВОЙ ТОКЕН НИЖЕ ---
-        const apiToken = "LlIKUY9au0k9VCkP9RX8NqyU5Xu370Ua"; 
-        // ------------------------------
-        
-        const userId = tg.initDataUnsafe?.user?.id;
-        const cardsText = selected.join(", ");
+   function sendToLeadConverter() {
+    const cardsText = selected.join(", ");
 
-        if (!userId) {
-            status.innerText = "Ошибка: Запустите приложение через бота!";
-            return;
-        }
+    // Этот метод отправит текст "Маг, Жрица..." прямо в чат боту.
+    // Бот увидит это сообщение, и если у него настроено "Действие" 
+    // на ключевое слово или следующий шаг — он подхватит его.
+    tg.sendData(cardsText); 
 
-        // Прямая ссылка на обновление переменной по ID пользователя
-        const url = `https://leadconverter.ru/api/v1/${apiToken}/subscribers/${userId}/variables`;
-
-        btn.disabled = true;
-        status.innerText = "Сохранение для пользователя " + userId + "...";
-
-        try {
-            // Отправляем данные как JSON
-            fetch(url, {
-                method: 'POST',
-                mode: 'no-cors', // Чтобы избежать ошибок CORS в браузере
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ "vibor_kart": cardsText })
-            });
-
-            status.innerText = "✅ Успешно сохранено!";
-            
-            // Закрываем через секунду
-            setTimeout(() => {
-                tg.close();
-            }, 1000);
-
-        } catch (e) {
-            status.innerText = "Ошибка API. Проверьте токен.";
-            btn.disabled = false;
-        }
-    }
+    tg.close();
+}
 </script>
 </body>
 </html>
