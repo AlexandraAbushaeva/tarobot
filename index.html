@@ -6,76 +6,21 @@
     <title>Выбор карт</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            font-family: sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
-        }
-        .container {
-            text-align: center;
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            width: 90%;
-            max-width: 400px;
-        }
-        .cards {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-        .card {
-            width: 60px;
-            height: 90px;
-            background-color: #34495e;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 20px;
-            transition: transform 0.2s, background-color 0.2s;
-        }
-        .card.selected {
-            background-color: #3498db;
-            transform: translateY(-10px);
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #27ae60;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-        }
-        button:disabled {
-            background-color: #bdc3c7;
-        }
-        #debug-info {
-            margin-top: 15px;
-            font-size: 12px;
-            color: #7f8c8d;
-            min-height: 1.2em;
-        }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background-color: #f0f0f0; }
+        .container { text-align: center; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 90%; max-width: 400px; }
+        .cards { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
+        .card { width: 60px; height: 90px; background-color: #34495e; color: white; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; font-size: 20px; transition: transform 0.2s; }
+        .card.selected { background-color: #3498db; transform: translateY(-10px); }
+        button { padding: 10px 20px; font-size: 16px; background-color: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
+        button:disabled { background-color: #bdc3c7; }
+        #debug-info { margin-top: 15px; font-size: 12px; color: #7f8c8d; min-height: 1.2em; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>Выбери 3 карты</h2>
-    <div class="cards" id="card-container">
-        </div>
+    <div class="cards" id="card-container"></div>
     <button id="confirm-btn" disabled onclick="sendToLeadConverter()">Подтвердить</button>
     <div id="debug-info"></div>
 </div>
@@ -84,7 +29,6 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    // Список названий карт (можешь заменить на свои)
     const cardNames = ["Маг", "Жрица", "Императрица", "Император", "Жрец"];
     let selected = [];
 
@@ -92,7 +36,7 @@
     const btn = document.getElementById('confirm-btn');
     const debugInfo = document.getElementById('debug-info');
 
-    // Отрисовка карт
+    // Создание карт
     cardNames.forEach(name => {
         const card = document.createElement('div');
         card.className = 'card';
@@ -105,8 +49,7 @@
                 selected.push(name);
                 card.classList.add('selected');
             }
-            
-            // Обновляем текст проверки под кнопкой
+            // Выводим названия выбранных карт внизу для проверки
             debugInfo.innerText = selected.length > 0 ? "Выбрано: " + selected.join(", ") : "";
             btn.disabled = selected.length !== 3;
         };
@@ -114,40 +57,33 @@
     });
 
     async function sendToLeadConverter() {
-        const apiToken = "LlIKUY9au0k9VCkP9RX8NqyU5Xu370Ua"; // ВСТАВЬ СЮДА СВОЙ ТОКЕН
+        const apiToken = "LlIKUY9au0k9VCkP9RX8NqyU5Xu370Ua"; // Вставь актуальный токен
         const userId = tg.initDataUnsafe?.user?.id;
         const cardsText = selected.join(", ");
 
-        // Метод для записи в переменную подписчика
+        // Используем метод PATCH для обновления переменных профиля
         const url = `https://leadconverter.ru/api/v1/${apiToken}/subscribers/${userId}/variables`;
 
-        debugInfo.innerText = "Сохраняю: " + cardsText + "...";
+        debugInfo.innerText = "Записываю в переменную...";
         btn.disabled = true;
 
         try {
-            // Отправляем данные методом POST (он часто надежнее PATCH для форм)
+            // Отправляем данные. Используем POST как универсальный метод для API
             fetch(url, {
                 method: 'POST',
-                mode: 'no-cors',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    "vibor_kart": cardsText // Имя переменной как в LeadConverter
-                })
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ "vibor_kart": cardsText })
             });
 
-            // Небольшая задержка перед закрытием, чтобы запрос успел вылететь
-            setTimeout(() => {
-                tg.close();
-            }, 1000);
+            // Закрываем приложение через секунду, чтобы запрос успел уйти
+            setTimeout(() => { tg.close(); }, 1000);
 
         } catch (e) {
-            debugInfo.innerText = "Ошибка связи. Попробуйте снова.";
+            debugInfo.innerText = "Ошибка записи. Попробуйте еще раз.";
             btn.disabled = false;
         }
     }
 </script>
-
 </body>
 </html>
