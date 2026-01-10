@@ -6,43 +6,44 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f4f4f9; }
-        .card-box { background: white; padding: 20px; border-radius: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 80%; }
-        .grid { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 15px 0; }
-        .card { width: 55px; height: 80px; background: #2c3e50; color: white; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; font-size: 20px; border: 3px solid transparent; }
+        .card { width: 70px; height: 100px; background: #2c3e50; color: white; display: flex; align-items: center; justify-content: center; border-radius: 10px; cursor: pointer; border: 3px solid transparent; font-size: 12px; text-align: center; padding: 5px; }
         .card.selected { background: #3498db; border-color: #2980b9; }
-        #send-btn { width: 100%; padding: 12px; background: #ccc; color: white; border: none; border-radius: 10px; font-weight: bold; }
-        #send-btn.active { background: #27ae60; cursor: pointer; }
+        .grid { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 20px; }
+        #btn { width: 80%; padding: 15px; background: #ccc; border: none; border-radius: 12px; color: white; font-weight: bold; }
+        #btn.active { background: #27ae60; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="card-box">
-        <h3>Выбери 3 карты</h3>
-        <div class="grid" id="grid"></div>
-        <button id="send-btn" disabled>ПОДТВЕРДИТЬ</button>
-    </div>
+    <h3>Выбери 3 карты</h3>
+    <div class="grid" id="grid"></div>
+    <button id="btn" disabled>ПОДТВЕРДИТЬ</button>
+
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
         const names = ["Маг", "Жрица", "Императрица", "Император", "Жрец"];
         let sel = [];
         const grid = document.getElementById('grid');
-        const btn = document.getElementById('send-btn');
+        const btn = document.getElementById('btn');
 
         names.forEach(n => {
             const c = document.createElement('div');
-            c.className = 'card'; c.innerText = '?';
+            c.className = 'card'; c.innerText = n;
             c.onclick = () => {
                 if (sel.includes(n)) { sel = sel.filter(i => i !== n); c.classList.remove('selected'); }
                 else if (sel.length < 3) { sel.push(n); c.classList.add('selected'); }
-                btn.disabled = sel.length !== 3;
-                btn.classList.toggle('active', sel.length === 3);
+                btn.disabled = sel.length !== 3; btn.classList.toggle('active', sel.length === 3);
             };
             grid.appendChild(c);
         });
 
-        btn.onclick = () => {
-            // Отправляем текст в чат. Это сработает, если бот запущен
-            tg.sendData(sel.join(", ")); 
+        btn.onclick = async () => {
+            const uid = tg.initDataUnsafe?.user?.id || "no_id";
+            const cards = sel.join(", ");
+            // ВСТАВЬ СВОЮ НОВУЮ ССЫЛКУ ИЗ ГУГЛ СКРИПТА
+            const url = `https://script.google.com/macros/s/AKfycbzB7MZb6_aitr3xB7LRP9-KG1rvBo3Cb9FU4Zj12ykExUutuyA63bIERiIv6DsbSV1hUw/exec?user_id=${uid}&cards=${encodeURIComponent(cards)}&action=save`;
+            
+            btn.innerText = "СОХРАНЯЕМ...";
+            await fetch(url, { mode: 'no-cors' });
             tg.close();
         };
     </script>
