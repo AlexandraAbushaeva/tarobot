@@ -38,19 +38,26 @@
         });
 
         btn.onclick = async () => {
-            const uid = tg.initDataUnsafe?.user?.id || "no_id";
-            const cards = sel.join(", ");
-            const scriptURL = "https://script.google.com/macros/s/AKfycbzWuguXMpDYPngXwmMCtP_gVz8S7VJ4HkoPfD4Xo79gOPHUxs2C6WiRFJZTupi4zwh-eA/exec"; 
-            
-            btn.innerText = "ОТПРАВКА...";
-            try {
-                // Магия: отправляем данные в скрипт, а он сам всё сделает
-                await fetch(`${scriptURL}?user_id=${uid}&cards=${encodeURIComponent(cards)}`, { mode: 'no-cors' });
-                tg.close();
-            } catch (e) {
-                btn.innerText = "ОШИБКА";
-            }
-        };
+    const uid = tg.initDataUnsafe?.user?.id || "no_id";
+    const cards = sel.join(", ");
+    const scriptURL = "https://script.google.com/macros/s/AKfycbwz1C8YUe53xqwJaSu8_RcMRdEHXbSf9ZninKPoaqWmvoFErlohxMP1SEyS9DauawwY/exec"; 
+    
+    btn.innerText = "ОТПРАВКА...";
+    try {
+        // Мы ждем, пока запрос реально уйдет
+        await fetch(`${scriptURL}?user_id=${uid}&cards=${encodeURIComponent(cards)}`, { 
+            mode: 'no-cors' 
+        });
+        
+        // Маленькая пауза в полсекунды для верности, чтобы скрипт успел "переварить"
+        setTimeout(() => {
+            tg.close();
+        }, 500);
+
+    } catch (e) {
+        btn.innerText = "ОШИБКА";
+    }
+};
     </script>
 </body>
 </html>
