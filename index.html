@@ -5,61 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f0f2f5; }
-        .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 80%; text-align: center; }
-        .grid { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 20px 0; }
-        .card { width: 60px; height: 90px; background: #2c3e50; color: white; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; font-size: 24px; border: 3px solid transparent; }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f4f4f9; }
+        .card-box { background: white; padding: 20px; border-radius: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 80%; }
+        .grid { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 15px 0; }
+        .card { width: 55px; height: 80px; background: #2c3e50; color: white; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; font-size: 20px; border: 3px solid transparent; }
         .card.selected { background: #3498db; border-color: #2980b9; }
-        #confirm-btn { width: 100%; padding: 15px; background: #ccc; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
-        #confirm-btn.active { background: #27ae60; }
+        #send-btn { width: 100%; padding: 12px; background: #ccc; color: white; border: none; border-radius: 10px; font-weight: bold; }
+        #send-btn.active { background: #27ae60; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h3>Выберите 3 карты</h3>
+    <div class="card-box">
+        <h3>Выбери 3 карты</h3>
         <div class="grid" id="grid"></div>
-        <button id="confirm-btn" disabled>Подтвердить выбор</button>
+        <button id="send-btn" disabled>ПОДТВЕРДИТЬ</button>
     </div>
-
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        const cardNames = ["Маг", "Жрица", "Императрица", "Император", "Жрец"];
-        let selected = [];
+        const names = ["Маг", "Жрица", "Императрица", "Император", "Жрец"];
+        let sel = [];
         const grid = document.getElementById('grid');
-        const btn = document.getElementById('confirm-btn');
+        const btn = document.getElementById('send-btn');
 
-        cardNames.forEach(name => {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.innerText = '?';
-            card.onclick = () => {
-                if (selected.includes(name)) {
-                    selected = selected.filter(n => n !== name);
-                    card.classList.remove('selected');
-                } else if (selected.length < 3) {
-                    selected.push(name);
-                    card.classList.add('selected');
-                }
-                btn.disabled = selected.length !== 3;
-                btn.classList.toggle('active', selected.length === 3);
+        names.forEach(n => {
+            const c = document.createElement('div');
+            c.className = 'card'; c.innerText = '?';
+            c.onclick = () => {
+                if (sel.includes(n)) { sel = sel.filter(i => i !== n); c.classList.remove('selected'); }
+                else if (sel.length < 3) { sel.push(n); c.classList.add('selected'); }
+                btn.disabled = sel.length !== 3;
+                btn.classList.toggle('active', sel.length === 3);
             };
-            grid.appendChild(card);
+            grid.appendChild(c);
         });
 
-        btn.onclick = async () => {
-            const userId = tg.initDataUnsafe?.user?.id || "no_id";
-            const cards = selected.join(", ");
-            // ВСТАВЬ СЮДА СВОЮ ССЫЛКУ ИЗ ЛОГА ДО СЛОВА /exec
-            const scriptURL = "https://script.google.com/macros/s/AKfycbxhA-rBX7mIXP0mrCJD3HPnM670GCYLCIw5r_rwzESfQmmIp_vS6SiplTZBipil8OKmtA/exec";
-            
-            btn.innerText = "Сохранение...";
-            try {
-                await fetch(`${scriptURL}?user_id=${userId}&cards=${encodeURIComponent(cards)}`, { mode: 'no-cors' });
-                tg.close();
-            } catch (e) {
-                btn.innerText = "Ошибка";
-            }
+        btn.onclick = () => {
+            // Отправляем текст в чат. Это сработает, если бот запущен
+            tg.sendData(sel.join(", ")); 
+            tg.close();
         };
     </script>
 </body>
