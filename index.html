@@ -1,63 +1,135 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Таро Расклад</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f4f4f9; }
-        .grid { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 20px; }
-        .card { width: 70px; height: 100px; background: #2c3e50; color: white; display: flex; align-items: center; justify-content: center; border-radius: 10px; cursor: pointer; font-size: 11px; text-align: center; padding: 5px; border: 3px solid transparent; }
-        .card.selected { background: #3498db; border-color: #2980b9; transform: scale(1.05); }
-        #btn { width: 200px; padding: 15px; background: #ccc; border: none; border-radius: 12px; color: white; font-weight: bold; }
-        #btn.active { background: #27ae60; cursor: pointer; }
+        body { 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0; 
+            background: #1a1a1a; /* Темный фон для атмосферы */
+            color: white;
+            overflow: hidden;
+        }
+        h3 { margin-bottom: 20px; font-weight: 300; letter-spacing: 1px; }
+        .grid { 
+            display: flex; 
+            gap: 12px; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            max-width: 350px; 
+        }
+        .card { 
+            width: 80px; 
+            height: 120px; 
+            background: #2c2c2c; 
+            border: 1px solid #444;
+            color: #ccc; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 12px; 
+            text-align: center; 
+            padding: 5px; 
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .card.selected { 
+            background: #4a34db; 
+            border-color: #7f6cf5; 
+            color: white;
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(127, 108, 245, 0.4);
+        }
+        .status { margin-top: 20px; font-size: 14px; color: #888; }
     </style>
 </head>
 <body>
-    <h3>Выберите 3 карты</h3>
+
+    <h3 id="title">ВЫБЕРИТЕ 3 КАРТЫ</h3>
     <div class="grid" id="grid"></div>
-    <button id="btn" disabled>ПОДТВЕРДИТЬ</button>
+    <div class="status" id="status"></div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        const names = ["Маг", "Жрица", "Императрица", "Император", "Жрец"];
-        let sel = [];
-        const grid = document.getElementById('grid');
-        const btn = document.getElementById('btn');
+        tg.ready();
 
-        names.forEach(n => {
-            const c = document.createElement('div');
-            c.className = 'card'; c.innerText = n;
-            c.onclick = () => {
-                if (sel.includes(n)) { sel = sel.filter(i => i !== n); c.classList.remove('selected'); }
-                else if (sel.length < 3) { sel.push(n); c.classList.add('selected'); }
-                btn.disabled = sel.length !== 3; btn.classList.toggle('active', sel.length === 3);
-            };
-            grid.appendChild(c);
-        });
-
-        btn.onclick = async () => {
-    const uid = tg.initDataUnsafe?.user?.id || "no_id";
-    const cards = sel.join(", ");
-    const scriptURL = "https://script.google.com/macros/s/AKfycbwz1C8YUe53xqwJaSu8_RcMRdEHXbSf9ZninKPoaqWmvoFErlohxMP1SEyS9DauawwY/exec"; 
-    
-    btn.innerText = "ОТПРАВКА...";
-    try {
-        // Мы ждем, пока запрос реально уйдет
-        await fetch(`${scriptURL}?user_id=${uid}&cards=${encodeURIComponent(cards)}`, { 
-            mode: 'no-cors' 
-        });
+        const names = ["Маг", "Жрица", "Императрица", "Император", "Жрец", "Влюбленные", "Колесница"];
+        let selectedCards = [];
         
-        // Маленькая пауза в полсекунды для верности, чтобы скрипт успел "переварить"
-        setTimeout(() => {
-            tg.close();
-        }, 500);
+        const grid = document.getElementById('grid');
+        const title = document.getElementById('title');
+        const status = document.getElementById('status');
 
-    } catch (e) {
-        btn.innerText = "ОШИБКА";
-    }
-};
+        // Твой URL из Google Apps Script
+        const scriptURL = "https://script.google.com/macros/s/AKfycbwz1C8YUe53xqwJaSu8_RcMRdEHXbSf9ZninKPoaqWmvoFErlohxMP1SEyS9DauawwY/exec";
+
+        // Создаем карты
+        names.forEach(name => {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'card';
+            cardElement.innerText = "Клеймо Таро"; // Пока заглушка вместо картинки
+            
+            cardElement.onclick = async () => {
+                if (selectedCards.includes(name)) {
+                    // Убираем выделение, если нажали повторно
+                    selectedCards = selectedCards.filter(item => item !== name);
+                    cardElement.classList.remove('selected');
+                    cardElement.innerText = "Клеймо Таро";
+                } else if (selectedCards.length < 3) {
+                    // Добавляем карту
+                    selectedCards.push(name);
+                    cardElement.classList.add('selected');
+                    cardElement.innerText = name; // Показываем название при выборе
+
+                    // Если выбрали 3 — сразу отправляем
+                    if (selectedCards.length === 3) {
+                        await sendData();
+                    }
+                }
+            };
+            grid.appendChild(cardElement);
+        });
+
+        async function sendData() {
+            const userId = tg.initDataUnsafe?.user?.id || "test_user";
+            const cardsString = selectedCards.join(", ");
+            
+            title.innerText = "КАРТЫ ВЫБРАНЫ";
+            status.innerText = "Передаем ответ боту...";
+            
+            // Блокируем клики, чтобы не нажали лишнего
+            grid.style.pointerEvents = "none";
+
+            try {
+                // Отправляем данные в Google Script
+                await fetch(`${scriptURL}?user_id=${userId}&cards=${encodeURIComponent(cardsString)}`, { 
+                    mode: 'no-cors' 
+                });
+                
+                status.innerText = "Успешно! Возвращаемся в чат...";
+                
+                // Закрываем через полсекунды, чтобы пользователь увидел успех
+                setTimeout(() => {
+                    tg.close();
+                }, 800);
+
+            } catch (error) {
+                console.error(error);
+                status.innerText = "Ошибка связи. Попробуйте еще раз.";
+                grid.style.pointerEvents = "auto";
+            }
+        }
     </script>
 </body>
 </html>
