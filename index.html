@@ -3,130 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Таро Расклад</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { 
-            font-family: 'Segoe UI', Roboto, sans-serif; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
-            margin: 0; 
-            background: #1a1a1a; /* Темный фон для атмосферы */
-            color: white;
-            overflow: hidden;
-        }
-        h3 { margin-bottom: 20px; font-weight: 300; letter-spacing: 1px; }
-        .grid { 
-            display: flex; 
-            gap: 12px; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            max-width: 350px; 
-        }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #1a1a1a; color: white; }
+        .grid { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; max-width: 350px; }
         .card { 
-            width: 80px; 
-            height: 120px; 
-            background: #2c2c2c; 
-            border: 1px solid #444;
-            color: #ccc; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 12px; 
-            text-align: center; 
-            padding: 5px; 
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            width: 80px; height: 110px; background: #333; border: 1px solid #555;
+            display: flex; align-items: center; justify-content: center; border-radius: 8px; 
+            cursor: pointer; font-size: 11px; text-align: center; transition: 0.2s;
         }
+        /* Стиль для выбранной карты (без возможности отмены) */
         .card.selected { 
-            background: #4a34db; 
-            border-color: #7f6cf5; 
-            color: white;
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(127, 108, 245, 0.4);
+            background: #5c43f5; 
+            border-color: #fff; 
+            transform: scale(1.05); 
+            cursor: default; /* меняем курсор, чтобы было понятно, что кликать больше нельзя */
         }
-        .status { margin-top: 20px; font-size: 14px; color: #888; }
+        #status { margin-top: 20px; color: #888; font-size: 13px; height: 20px; }
     </style>
 </head>
 <body>
 
     <h3 id="title">ВЫБЕРИТЕ 3 КАРТЫ</h3>
     <div class="grid" id="grid"></div>
-    <div class="status" id="status"></div>
+    <div id="status">Загрузка...</div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.ready();
 
-        const names = ["Маг", "Жрица", "Императрица", "Император", "Жрец", "Влюбленные", "Колесница"];
-        let selectedCards = [];
+        // ОБЯЗАТЕЛЬНО: Вставь сюда свою ссылку после развертывания скрипта
+        const scriptURL = "ТВОЙ_URL_СКРИПТА"; 
+        const userId = tg.initDataUnsafe?.user?.id || "test_user";
         
+        const names = ["Маг", "Жрица", "Императрица", "Император", "Жрец", "Влюбленные", "Колесница"];
+        let selected = [];
+
+        // Очищаем старые данные при входе
+        window.onload = () => {
+            fetch(`${scriptURL}?user_id=${userId}&action=clear`, { mode: 'no-cors' });
+            document.getElementById('status').innerText = "Сделайте свой выбор";
+        };
+
         const grid = document.getElementById('grid');
-        const title = document.getElementById('title');
-        const status = document.getElementById('status');
-
-        // Твой URL из Google Apps Script
-        const scriptURL = "https://script.google.com/macros/s/AKfycbwz1C8YUe53xqwJaSu8_RcMRdEHXbSf9ZninKPoaqWmvoFErlohxMP1SEyS9DauawwY/exec";
-
-        // Создаем карты
         names.forEach(name => {
-            const cardElement = document.createElement('div');
-            cardElement.className = 'card';
-            cardElement.innerText = "Клеймо Таро"; // Пока заглушка вместо картинки
+            const el = document.createElement('div');
+            el.className = 'card';
+            el.innerText = "Карта";
             
-            cardElement.onclick = async () => {
-                if (selectedCards.includes(name)) {
-                    // Убираем выделение, если нажали повторно
-                    selectedCards = selectedCards.filter(item => item !== name);
-                    cardElement.classList.remove('selected');
-                    cardElement.innerText = "Клеймо Таро";
-                } else if (selectedCards.length < 3) {
-                    // Добавляем карту
-                    selectedCards.push(name);
-                    cardElement.classList.add('selected');
-                    cardElement.innerText = name; // Показываем название при выборе
+            el.onclick = async () => {
+                // Если карта уже выбрана — просто игнорируем клик (отмена запрещена)
+                if (selected.includes(name)) return;
 
-                    // Если выбрали 3 — сразу отправляем
-                    if (selectedCards.length === 3) {
-                        await sendData();
+                // Если в списке меньше 3-х карт — добавляем
+                if (selected.length < 3) {
+                    selected.push(name);
+                    el.classList.add('selected');
+                    el.innerText = name; // Показываем название выбранной карты
+
+                    // Как только стало 3 — отправляем результат
+                    if (selected.length === 3) {
+                        sendResult();
                     }
                 }
             };
-            grid.appendChild(cardElement);
+            grid.appendChild(el);
         });
 
-        async function sendData() {
-            const userId = tg.initDataUnsafe?.user?.id || "test_user";
-            const cardsString = selectedCards.join(", ");
+        async function sendResult() {
+            document.getElementById('title').innerText = "ВЫБОР ПРИНЯТ";
+            document.getElementById('status').innerText = "Сохраняем...";
+            grid.style.pointerEvents = "none"; // полностью блокируем всё поле
             
-            title.innerText = "КАРТЫ ВЫБРАНЫ";
-            status.innerText = "Передаем ответ боту...";
-            
-            // Блокируем клики, чтобы не нажали лишнего
-            grid.style.pointerEvents = "none";
-
+            const cards = selected.join(", ");
             try {
-                // Отправляем данные в Google Script
-                await fetch(`${scriptURL}?user_id=${userId}&cards=${encodeURIComponent(cardsString)}`, { 
-                    mode: 'no-cors' 
-                });
-                
-                status.innerText = "Успешно! Возвращаемся в чат...";
-                
-                // Закрываем через полсекунды, чтобы пользователь увидел успех
-                setTimeout(() => {
-                    tg.close();
-                }, 800);
-
-            } catch (error) {
-                console.error(error);
-                status.innerText = "Ошибка связи. Попробуйте еще раз.";
+                await fetch(`${scriptURL}?user_id=${userId}&cards=${encodeURIComponent(cards)}`, { mode: 'no-cors' });
+                document.getElementById('status').innerText = "Готово! Закрываем...";
+                setTimeout(() => tg.close(), 700);
+            } catch (e) {
+                document.getElementById('title').innerText = "ОШИБКА СЕТИ";
                 grid.style.pointerEvents = "auto";
             }
         }
