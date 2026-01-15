@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; justify-items: center; max-width: 400px; margin: 0 auto; }
+        .card { 
+            width: 100px; height: 150px; background: #333; border: 2px solid #444; 
+            border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.3s; font-size: 12px;
+        }
+        .card.selected { border-color: #0088cc; background: #444; transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,136,204,0.4); }
+        .card:last-child { grid-column: 2; } /* Седьмая карта по центру */
+        #confirm-btn { 
+            margin-top: 30px; padding: 15px 30px; background: #0088cc; color: white; 
+            border: none; border-radius: 8px; display: none; font-weight: bold; width: 100%; max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h3>ВЫБЕРИТЕ 3 КАРТЫ</h3>
+    <div class="grid" id="deck">
+        </div>
+    <button id="confirm-btn">ПОДТВЕРДИТЬ</button>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Развернуть на весь экран
+
+        const deck = document.getElementById('deck');
+        const confirmBtn = document.getElementById('confirm-btn');
+        let selectedCards = [];
+
+        // Создаем 7 карт
+        for (let i = 1; i <= 7; i++) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerText = 'Клеймо Таро';
+            card.onclick = () => toggleCard(i, card);
+            deck.appendChild(card);
+        }
+
+        function toggleCard(id, element) {
+            if (selectedCards.includes(id)) {
+                selectedCards = selectedCards.filter(item => item !== id);
+                element.classList.remove('selected');
+            } else if (selectedCards.length < 3) {
+                selectedCards.push(id);
+                element.classList.add('selected');
+            }
+            
+            // Показываем кнопку только когда выбрано ровно 3 карты
+            confirmBtn.style.display = selectedCards.length === 3 ? 'inline-block' : 'none';
+        }
+
+        confirmBtn.onclick = () => {
+            const data = {
+                action: "cards_selected",
+                cards: selectedCards
+            };
+            // Отправка данных обратно в бот
+            tg.sendData(JSON.stringify(data)); 
+            tg.close();
+        };
+    </script>
+</body>
+</html>
