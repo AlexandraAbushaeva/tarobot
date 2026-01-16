@@ -14,7 +14,7 @@
             justify-content: center; 
             height: 100vh; 
             margin: 0; 
-            background: #1a1a1a; /* Темный фон для атмосферы */
+            background: #1a1a1a; 
             color: white;
             overflow: hidden;
         }
@@ -25,6 +25,7 @@
             flex-wrap: wrap; 
             justify-content: center; 
             max-width: 350px; 
+            margin-bottom: 30px;
         }
         .card { 
             width: 80px; 
@@ -41,22 +42,42 @@
             text-align: center; 
             padding: 5px; 
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         .card.selected { 
             background: #4a34db; 
             border-color: #7f6cf5; 
             color: white;
             transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(127, 108, 245, 0.4);
         }
-        .status { margin-top: 20px; font-size: 14px; color: #888; }
+        /* Стиль кнопки Подтвердить */
+        #confirm-btn {
+            display: none; /* Скрыта в начале */
+            width: 200px;
+            padding: 15px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .status { margin-top: 15px; font-size: 14px; color: #888; }
     </style>
 </head>
 <body>
 
     <h3 id="title">ВЫБЕРИТЕ 3 КАРТЫ</h3>
     <div class="grid" id="grid"></div>
+    
+    <button id="confirm-btn">ПОДТВЕРДИТЬ</button>
+    
     <div class="status" id="status"></div>
 
     <script>
@@ -70,63 +91,67 @@
         const grid = document.getElementById('grid');
         const title = document.getElementById('title');
         const status = document.getElementById('status');
+        const confirmBtn = document.getElementById('confirm-btn');
 
-        // Твой URL из Google Apps Script
-        const scriptURL = "https://script.google.com/macros/s/AKfycbyD0tPoh7h1YNWAiASIyux-FiQKGO6aZidwS7ltlk991ve1_NGJpoPF46IuUp6maDbJ/exec";
+        const scriptURL = "https://script.google.com/macros/s/AKfycbwlBfanHKtJXvbdx9JvdLyLfbpoxbfi0J0PKDhTsn6S8shDXXcuHLuDnxDsyLJAWp7gbA/exec";
 
         // Создаем карты
         names.forEach(name => {
             const cardElement = document.createElement('div');
             cardElement.className = 'card';
-            cardElement.innerText = "Клеймо Таро"; // Пока заглушка вместо картинки
+            cardElement.innerText = "Клеймо Таро";
             
-            cardElement.onclick = async () => {
+            cardElement.onclick = () => {
+                // Если уже выбрали 3, клики по другим не работают
+                if (selectedCards.length >= 3 && !selectedCards.includes(name)) return;
+
                 if (selectedCards.includes(name)) {
-                    // Убираем выделение, если нажали повторно
+                    // Отмена выбора (если хочешь запретить — просто удали этот блок)
                     selectedCards = selectedCards.filter(item => item !== name);
                     cardElement.classList.remove('selected');
                     cardElement.innerText = "Клеймо Таро";
-                } else if (selectedCards.length < 3) {
-                    // Добавляем карту
+                } else {
                     selectedCards.push(name);
                     cardElement.classList.add('selected');
-                    cardElement.innerText = name; // Показываем название при выборе
+                    cardElement.innerText = name;
+                }
 
-                    // Если выбрали 3 — сразу отправляем
-                    if (selectedCards.length === 3) {
-                        await sendData();
-                    }
+                // Показываем кнопку, если выбрано ровно 3
+                if (selectedCards.length === 3) {
+                    confirmBtn.style.display = 'block';
+                } else {
+                    confirmBtn.style.display = 'none';
                 }
             };
             grid.appendChild(cardElement);
         });
 
+        // Нажатие на "Подтвердить"
+        confirmBtn.onclick = async () => {
+            await sendData();
+        };
+
         async function sendData() {
             const userId = tg.initDataUnsafe?.user?.id || "test_user";
             const cardsString = selectedCards.join(", ");
             
-            title.innerText = "КАРТЫ ВЫБРАНЫ";
-            status.innerText = "Передаем ответ боту...";
-            
-            // Блокируем клики, чтобы не нажали лишнего
+            confirmBtn.disabled = true;
+            confirmBtn.innerText = "ОТПРАВКА...";
             grid.style.pointerEvents = "none";
 
             try {
-                // Отправляем данные в Google Script
+                // Вот здесь летит вебхук, который записывает данные
                 await fetch(`${scriptURL}?user_id=${userId}&cards=${encodeURIComponent(cardsString)}`, { 
                     mode: 'no-cors' 
                 });
                 
-                status.innerText = "Успешно! Возвращаемся в чат...";
-                
-                // Закрываем через полсекунды, чтобы пользователь увидел успех
-                setTimeout(() => {
-                    tg.close();
-                }, 800);
+                status.innerText = "Данные переданы!";
+                setTimeout(() => { tg.close(); }, 600);
 
             } catch (error) {
-                console.error(error);
-                status.innerText = "Ошибка связи. Попробуйте еще раз.";
+                status.innerText = "Ошибка. Попробуйте еще раз.";
+                confirmBtn.disabled = false;
+                confirmBtn.innerText = "ПОДТВЕРДИТЬ";
                 grid.style.pointerEvents = "auto";
             }
         }
