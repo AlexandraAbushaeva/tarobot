@@ -35,7 +35,7 @@
             height: 150px;
             position: relative;
             transform-style: preserve-3d;
-            transition: transform 0.6s;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             grid-column: span 2;
         }
@@ -63,15 +63,16 @@
 
         .card-back {
             transform: rotateY(180deg);
-            background-color: #000;
+            background-color: #1a1a1a;
             background-size: 100% 100%;
+            background-position: center;
             border: 2px solid gold;
             display: flex;
             align-items: flex-end;
         }
 
         .card-name-tag {
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             color: #fff;
             font-size: 10px;
             width: 100%;
@@ -90,6 +91,7 @@
             color: white;
             border-radius: 30px;
             font-weight: bold;
+            box-shadow: 0 5px 20px rgba(110, 69, 226, 0.5);
         }
 
         .locked { opacity: 0.5; pointer-events: none; filter: grayscale(0.5); }
@@ -105,98 +107,36 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        const base = "https://upload.wikimedia.org/wikipedia/commons/";
+        // Ссылка на картинки из твоего репозитория LindseyB
+        const imgBase = "https://raw.githubusercontent.com/LindseyB/tarot-api/master/static/img/";
+
+        const deck = [];
         
-        const deck = [
-            // Старшие Арканы
-            { name: "Шут", img: "9/90/RWS_Tarot_00_Fool.jpg" },
-            { name: "Маг", img: "d/de/RWS_Tarot_01_Magician.jpg" },
-            { name: "Жрица", img: "8/88/RWS_Tarot_02_High_Priestess.jpg" },
-            { name: "Императрица", img: "a/af/RWS_Tarot_03_Empress.jpg" },
-            { name: "Император", img: "c/c3/RWS_Tarot_04_Emperor.jpg" },
-            { name: "Иерофант", img: "8/8d/RWS_Tarot_05_Hierophant.jpg" },
-            { name: "Влюбленные", img: "3/3a/RWS_Tarot_06_Lovers.jpg" },
-            { name: "Колесница", img: "9/9b/RWS_Tarot_07_Chariot.jpg" },
-            { name: "Сила", img: "f/f5/RWS_Tarot_08_Strength.jpg" },
-            { name: "Отшельник", img: "4/4d/RWS_Tarot_09_Hermit.jpg" },
-            { name: "Колесо Фортуны", img: "3/3c/RWS_Tarot_10_Wheel_of_Fortune.jpg" },
-            { name: "Справедливость", img: "e/e0/RWS_Tarot_11_Justice.jpg" },
-            { name: "Повешенный", img: "2/2b/RWS_Tarot_12_Hanged_Man.jpg" },
-            { name: "Смерть", img: "d/d7/RWS_Tarot_13_Death.jpg" },
-            { name: "Умеренность", img: "f/f8/RWS_Tarot_14_Temperance.jpg" },
-            { name: "Дьявол", img: "5/55/RWS_Tarot_15_Devil.jpg" },
-            { name: "Башня", img: "5/53/RWS_Tarot_16_Tower.jpg" },
-            { name: "Звезда", img: "d/db/RWS_Tarot_17_Star.jpg" },
-            { name: "Луна", img: "f/f7/RWS_Tarot_18_Moon.jpg" },
-            { name: "Солнце", img: "1/17/RWS_Tarot_19_Sun.jpg" },
-            { name: "Суд", img: "d/dd/RWS_Tarot_20_Judgement.jpg" },
-            { name: "Мир", img: "f/ff/RWS_Tarot_21_World.jpg" },
+        // 1. Старшие Арканы (m00.jpg - m21.jpg)
+        const majorNames = ["Шут", "Маг", "Жрица", "Императрица", "Император", "Иерофант", "Влюбленные", "Колесница", "Сила", "Отшельник", "Колесо Фортуны", "Справедливость", "Повешенный", "Смерть", "Умеренность", "Дьявол", "Башня", "Звезда", "Луна", "Солнце", "Суд", "Мир"];
+        majorNames.forEach((name, i) => {
+            let fileName = "m" + i.toString().padStart(2, '0') + ".jpg";
+            deck.push({ name: name, img: fileName });
+        });
 
-            // Жезлы
-            { name: "Туз Жезлов", img: "1/11/Tarot_Cards_-_Ace_of_Wands.jpg" },
-            { name: "2 Жезлов", img: "0/0f/Tarot_Cards_-_2_of_Wands.jpg" },
-            { name: "3 Жезлов", img: "f/ff/Tarot_Cards_-_3_of_Wands.jpg" },
-            { name: "4 Жезлов", img: "a/a4/Tarot_Cards_-_4_of_Wands.jpg" },
-            { name: "5 Жезлов", img: "9/9d/Tarot_Cards_-_5_of_Wands.jpg" },
-            { name: "6 Жезлов", img: "3/3b/Tarot_Cards_-_6_of_Wands.jpg" },
-            { name: "7 Жезлов", img: "e/e4/Tarot_Cards_-_7_of_Wands.jpg" },
-            { name: "8 Жезлов", img: "6/6b/Tarot_Cards_-_8_of_Wands.jpg" },
-            { name: "9 Жезлов", img: "4/4d/Tarot_Cards_-_9_of_Wands.jpg" },
-            { name: "10 Жезлов", img: "0/0b/Tarot_Cards_-_10_of_Wands.jpg" },
-            { name: "Паж Жезлов", img: "6/6a/Tarot_Cards_-_Page_of_Wands.jpg" },
-            { name: "Рыцарь Жезлов", img: "1/16/Tarot_Cards_-_Knight_of_Wands.jpg" },
-            { name: "Королева Жезлов", img: "0/0d/Tarot_Cards_-_Queen_of_Wands.jpg" },
-            { name: "Король Жезлов", img: "c/ce/Tarot_Cards_-_King_of_Wands.jpg" },
-
-            // Кубки
-            { name: "Туз Кубков", img: "3/36/Tarot_Cards_-_Ace_of_Cups.jpg" },
-            { name: "2 Кубков", img: "f/f8/Tarot_Cards_-_2_of_Cups.jpg" },
-            { name: "3 Кубков", img: "3/39/Tarot_Cards_-_3_of_Cups.jpg" },
-            { name: "4 Кубков", img: "3/35/Tarot_Cards_-_4_of_Cups.jpg" },
-            { name: "5 Кубков", img: "d/d7/Tarot_Cards_-_5_of_Cups.jpg" },
-            { name: "6 Кубков", img: "1/17/Tarot_Cards_-_6_of_Cups.jpg" },
-            { name: "7 Кубков", img: "a/ae/Tarot_Cards_-_7_of_Cups.jpg" },
-            { name: "8 Кубков", img: "6/60/Tarot_Cards_-_8_of_Cups.jpg" },
-            { name: "9 Кубков", img: "2/24/Tarot_Cards_-_9_of_Cups.jpg" },
-            { name: "10 Кубков", img: "8/84/Tarot_Cards_-_10_of_Cups.jpg" },
-            { name: "Паж Кубков", img: "a/ad/Tarot_Cards_-_Page_of_Cups.jpg" },
-            { name: "Рыцарь Кубков", img: "f/fa/Tarot_Cards_-_Knight_of_Cups.jpg" },
-            { name: "Королева Кубков", img: "6/62/Tarot_Cards_-_Queen_of_Cups.jpg" },
-            { name: "Король Кубков", img: "0/04/Tarot_Cards_-_King_of_Cups.jpg" },
-
-            // Мечи
-            { name: "Туз Мечей", img: "1/1a/Tarot_Cards_-_Ace_of_Swords.jpg" },
-            { name: "2 Мечей", img: "9/9e/Tarot_Cards_-_2_of_Swords.jpg" },
-            { name: "3 Мечей", img: "0/02/Tarot_Cards_-_3_of_Swords.jpg" },
-            { name: "4 Мечей", img: "b/bf/Tarot_Cards_-_4_of_Swords.jpg" },
-            { name: "5 Мечей", img: "2/23/Tarot_Cards_-_5_of_Swords.jpg" },
-            { name: "6 Мечей", img: "2/29/Tarot_Cards_-_6_of_Swords.jpg" },
-            { name: "7 Мечей", img: "3/34/Tarot_Cards_-_7_of_Swords.jpg" },
-            { name: "8 Мечей", img: "a/a7/Tarot_Cards_-_8_of_Swords.jpg" },
-            { name: "9 Мечей", img: "2/2f/Tarot_Cards_-_9_of_Swords.jpg" },
-            { name: "10 Мечей", img: "d/d4/Tarot_Cards_-_10_of_Swords.jpg" },
-            { name: "Паж Мечей", img: "4/4c/Tarot_Cards_-_Page_of_Swords.jpg" },
-            { name: "Рыцарь Мечей", img: "b/b0/Tarot_Cards_-_Knight_of_Swords.jpg" },
-            { name: "Королева Мечей", img: "d/d4/Tarot_Cards_-_Queen_of_Swords.jpg" },
-            { name: "Король Мечей", img: "3/33/Tarot_Cards_-_King_of_Swords.jpg" },
-
-            // Пентакли
-            { name: "Туз Пентаклей", img: "f/fd/Tarot_Cards_-_Ace_of_Pentacles.jpg" },
-            { name: "2 Пентаклей", img: "9/9f/Tarot_Cards_-_2_of_Pentacles.jpg" },
-            { name: "3 Пентаклей", img: "4/42/Tarot_Cards_-_3_of_Pentacles.jpg" },
-            { name: "4 Пентаклей", img: "3/35/Tarot_Cards_-_4_of_Pentacles.jpg" },
-            { name: "5 Пентаклей", img: "9/96/Tarot_Cards_-_5_of_Pentacles.jpg" },
-            { name: "6 Пентаклей", img: "a/a6/Tarot_Cards_-_6_of_Pentacles.jpg" },
-            { name: "7 Пентаклей", img: "8/8a/Tarot_Cards_-_7_of_Pentacles.jpg" },
-            { name: "8 Пентаклей", img: "4/49/Tarot_Cards_-_8_of_Pentacles.jpg" },
-            { name: "9 Пентаклей", img: "f/f0/Tarot_Cards_-_9_of_Pentacles.jpg" },
-            { name: "10 Пентаклей", img: "3/3f/Tarot_Cards_-_10_of_Pentacles.jpg" },
-            { name: "Паж Пентаклей", img: "e/ec/Tarot_Cards_-_Page_of_Pentacles.jpg" },
-            { name: "Рыцарь Пентаклей", img: "d/d5/Tarot_Cards_-_Knight_of_Pentacles.jpg" },
-            { name: "Королева Пентаклей", img: "8/88/Tarot_Cards_-_Queen_of_Pentacles.jpg" },
-            { name: "Король Пентаклей", img: "1/1c/Tarot_Cards_-_King_of_Pentacles.jpg" }
+        // 2. Младшие Арканы (w01.jpg, c01.jpg и т.д.)
+        const suits = [
+            { id: "w", ru: "Жезлов" }, { id: "c", ru: "Кубков" }, 
+            { id: "s", ru: "Мечей" }, { id: "p", ru: "Пентаклей" }
         ];
+        const rankNames = ["Туз", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Паж", "Рыцарь", "Королева", "Король"];
 
+        suits.forEach(suit => {
+            for(let i=1; i<=14; i++) {
+                let fileName = suit.id + i.toString().padStart(2, '0') + ".jpg";
+                deck.push({
+                    name: `${rankNames[i-1]} ${suit.ru}`,
+                    img: fileName
+                });
+            }
+        });
+
+        // Перемешиваем и берем 5 карт
         const shuffled = deck.sort(() => 0.5 - Math.random()).slice(0, 5);
         let selected = [];
         const grid = document.getElementById('grid');
@@ -207,7 +147,7 @@
             container.className = 'card-container';
             container.innerHTML = `
                 <div class="card-face card-front"></div>
-                <div class="card-face card-back" style="background-image: url('${base + card.img}')">
+                <div class="card-face card-back" style="background-image: url('${imgBase + card.img}')">
                     <div class="card-name-tag">${card.name}</div>
                 </div>
             `;
@@ -226,12 +166,17 @@
 
         btn.onclick = async () => {
             btn.disabled = true;
-            btn.innerText = "ОТПРАВЛЯЕМ...";
+            btn.innerText = "СОХРАНЯЕМ...";
             const userId = tg.initDataUnsafe?.user?.id || "test_user";
-            // Твоя ссылка на скрипт
             const scriptURL = "https://script.google.com/macros/s/AKfycbyD0tPoh7h1YNWAiASIyux-FiQKGO6aZidwS7ltlk991ve1_NGJpoPF46IuUp6maDbJ/exec";
-            await fetch(`${scriptURL}?user_id=${userId}&cards=${encodeURIComponent(selected.join(", "))}`, { mode: 'no-cors' });
-            tg.close();
+            
+            try {
+                await fetch(`${scriptURL}?user_id=${userId}&cards=${encodeURIComponent(selected.join(", "))}`, { mode: 'no-cors' });
+                tg.close();
+            } catch(e) {
+                btn.disabled = false;
+                btn.innerText = "ПОДТВЕРДИТЬ ВЫБОР";
+            }
         };
     </script>
 </body>
