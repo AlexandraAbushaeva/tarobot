@@ -8,6 +8,7 @@
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
+            background: #1a1a1a; /* Темный фон, если bg.jpg не загрузится */
             background: url('bg.jpg') no-repeat center center fixed;
             background-size: cover;
             color: white;
@@ -22,7 +23,6 @@
 
         h3 { text-shadow: 2px 2px 4px rgba(0,0,0,0.8); margin-bottom: 20px; text-transform: uppercase; }
 
-        /* Сетка 3 + 2 */
         .grid {
             display: grid;
             grid-template-columns: repeat(6, 45px);
@@ -40,7 +40,6 @@
             grid-column: span 2;
         }
 
-        /* Выравнивание 2-го ряда */
         .card-container:nth-child(4) { grid-column: 2 / 4; }
         .card-container:nth-child(5) { grid-column: 4 / 6; }
 
@@ -63,8 +62,9 @@
 
         .card-back {
             transform: rotateY(180deg);
-            background-color: #1a1a1a;
-            background-size: 100% 100%;
+            background-color: #000;
+            background-size: contain; /* Чтобы карта не обрезалась */
+            background-repeat: no-repeat;
             background-position: center;
             border: 2px solid gold;
             display: flex;
@@ -91,7 +91,6 @@
             color: white;
             border-radius: 30px;
             font-weight: bold;
-            box-shadow: 0 5px 20px rgba(110, 69, 226, 0.5);
         }
 
         .locked { opacity: 0.5; pointer-events: none; filter: grayscale(0.5); }
@@ -107,36 +106,41 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Ссылка на картинки из твоего репозитория LindseyB
-        const imgBase = "https://raw.githubusercontent.com/LindseyB/tarot-api/master/static/img/";
+        // НОВЫЙ ПУТЬ К ПАПКЕ PUBLIC
+        const imgBase = "https://raw.githubusercontent.com/LindseyB/tarot-api/master/public/cards/";
 
         const deck = [];
         
-        // 1. Старшие Арканы (m00.jpg - m21.jpg)
-        const majorNames = ["Шут", "Маг", "Жрица", "Императрица", "Император", "Иерофант", "Влюбленные", "Колесница", "Сила", "Отшельник", "Колесо Фортуны", "Справедливость", "Повешенный", "Смерть", "Умеренность", "Дьявол", "Башня", "Звезда", "Луна", "Солнце", "Суд", "Мир"];
-        majorNames.forEach((name, i) => {
-            let fileName = "m" + i.toString().padStart(2, '0') + ".jpg";
-            deck.push({ name: name, img: fileName });
-        });
-
-        // 2. Младшие Арканы (w01.jpg, c01.jpg и т.д.)
-        const suits = [
-            { id: "w", ru: "Жезлов" }, { id: "c", ru: "Кубков" }, 
-            { id: "s", ru: "Мечей" }, { id: "p", ru: "Пентаклей" }
+        // 1. Старшие Арканы (названия как на скрине)
+        const majors = [
+            { n: "Шут", f: "TheFool" }, { n: "Маг", f: "TheMagician" }, { n: "Жрица", f: "TheHighPriestess" },
+            { n: "Императрица", f: "TheEmpress" }, { n: "Император", f: "TheEmperor" }, { n: "Иерофант", f: "TheHierophant" },
+            { n: "Влюбленные", f: "TheLovers" }, { n: "Колесница", f: "TheChariot" }, { n: "Сила", f: "Strength" },
+            { n: "Отшельник", f: "TheHermit" }, { n: "Колесо Фортуны", f: "WheelOfFortune" }, { n: "Справедливость", f: "Justice" },
+            { n: "Повешенный", f: "TheHangedMan" }, { n: "Смерть", f: "Death" }, { n: "Умеренность", f: "Temperance" },
+            { n: "Дьявол", f: "TheDevil" }, { n: "Башня", f: "TheTower" }, { n: "Звезда", f: "TheStar" },
+            { n: "Луна", f: "TheMoon" }, { n: "Солнце", f: "TheSun" }, { n: "Суд", f: "Judgement" }, { n: "Мир", f: "TheWorld" }
         ];
+        majors.forEach(m => deck.push({ name: m.n, img: m.f + ".png" }));
+
+        // 2. Младшие Арканы (Wands01.png, Cups01.png и т.д.)
+        const suits = [
+            { id: "Wands", ru: "Жезлов" }, { id: "Cups", ru: "Кубков" }, 
+            { id: "Swords", ru: "Мечей" }, { id: "Pentacles", ru: "Пентаклей" }
+        ];
+        const ranks = ["Туз", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14"];
         const rankNames = ["Туз", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Паж", "Рыцарь", "Королева", "Король"];
 
         suits.forEach(suit => {
-            for(let i=1; i<=14; i++) {
-                let fileName = suit.id + i.toString().padStart(2, '0') + ".jpg";
+            ranks.forEach((rank, index) => {
                 deck.push({
-                    name: `${rankNames[i-1]} ${suit.ru}`,
-                    img: fileName
+                    name: `${rankNames[index]} ${suit.ru}`,
+                    img: `${suit.id}${rank}.png`
                 });
-            }
+            });
         });
 
-        // Перемешиваем и берем 5 карт
+        // Перемешивание
         const shuffled = deck.sort(() => 0.5 - Math.random()).slice(0, 5);
         let selected = [];
         const grid = document.getElementById('grid');
@@ -166,8 +170,9 @@
 
         btn.onclick = async () => {
             btn.disabled = true;
-            btn.innerText = "СОХРАНЯЕМ...";
+            btn.innerText = "ОТПРАВКА...";
             const userId = tg.initDataUnsafe?.user?.id || "test_user";
+            // Твой скрипт из image_e3a84a.png
             const scriptURL = "https://script.google.com/macros/s/AKfycbyD0tPoh7h1YNWAiASIyux-FiQKGO6aZidwS7ltlk991ve1_NGJpoPF46IuUp6maDbJ/exec";
             
             try {
