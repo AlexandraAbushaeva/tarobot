@@ -20,16 +20,12 @@
             overflow: hidden;
         }
 
-        h3 {
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            margin-bottom: 20px;
-            text-transform: uppercase;
-        }
+        h3 { text-shadow: 2px 2px 4px rgba(0,0,0,0.8); margin-bottom: 20px; text-transform: uppercase; }
 
-        /* Сетка 3 сверху, 2 снизу */
+        /* Сетка 3 + 2 */
         .grid {
             display: grid;
-            grid-template-columns: repeat(6, 45px); /* Тонкая сетка для выравнивания */
+            grid-template-columns: repeat(6, 45px);
             gap: 15px 10px;
             justify-content: center;
         }
@@ -44,7 +40,7 @@
             grid-column: span 2;
         }
 
-        /* Выравнивание 2-го ряда (карты 4 и 5) */
+        /* Выравнивание 2-го ряда */
         .card-container:nth-child(4) { grid-column: 2 / 4; }
         .card-container:nth-child(5) { grid-column: 4 / 6; }
 
@@ -68,8 +64,7 @@
         .card-back {
             transform: rotateY(180deg);
             background-color: #000;
-            background-size: cover;
-            background-position: center;
+            background-size: 100% 100%;
             border: 2px solid gold;
             display: flex;
             align-items: flex-end;
@@ -95,7 +90,6 @@
             color: white;
             border-radius: 30px;
             font-weight: bold;
-            box-shadow: 0 5px 20px rgba(110, 69, 226, 0.5);
         }
 
         .locked { opacity: 0.5; pointer-events: none; filter: grayscale(0.5); }
@@ -113,8 +107,8 @@
 
         const base = "https://upload.wikimedia.org/wikipedia/commons/";
         
-        // Массив всех 78 карт с проверенными ссылками Википедии
         const deck = [
+            // Старшие Арканы
             { name: "Шут", img: "9/90/RWS_Tarot_00_Fool.jpg" },
             { name: "Маг", img: "d/de/RWS_Tarot_01_Magician.jpg" },
             { name: "Жрица", img: "8/88/RWS_Tarot_02_High_Priestess.jpg" },
@@ -136,26 +130,73 @@
             { name: "Луна", img: "f/f7/RWS_Tarot_18_Moon.jpg" },
             { name: "Солнце", img: "1/17/RWS_Tarot_19_Sun.jpg" },
             { name: "Суд", img: "d/dd/RWS_Tarot_20_Judgement.jpg" },
-            { name: "Мир", img: "f/ff/RWS_Tarot_21_World.jpg" }
+            { name: "Мир", img: "f/ff/RWS_Tarot_21_World.jpg" },
+
+            // Жезлы
+            { name: "Туз Жезлов", img: "1/11/Tarot_Cards_-_Ace_of_Wands.jpg" },
+            { name: "2 Жезлов", img: "0/0f/Tarot_Cards_-_2_of_Wands.jpg" },
+            { name: "3 Жезлов", img: "f/ff/Tarot_Cards_-_3_of_Wands.jpg" },
+            { name: "4 Жезлов", img: "a/a4/Tarot_Cards_-_4_of_Wands.jpg" },
+            { name: "5 Жезлов", img: "9/9d/Tarot_Cards_-_5_of_Wands.jpg" },
+            { name: "6 Жезлов", img: "3/3b/Tarot_Cards_-_6_of_Wands.jpg" },
+            { name: "7 Жезлов", img: "e/e4/Tarot_Cards_-_7_of_Wands.jpg" },
+            { name: "8 Жезлов", img: "6/6b/Tarot_Cards_-_8_of_Wands.jpg" },
+            { name: "9 Жезлов", img: "4/4d/Tarot_Cards_-_9_of_Wands.jpg" },
+            { name: "10 Жезлов", img: "0/0b/Tarot_Cards_-_10_of_Wands.jpg" },
+            { name: "Паж Жезлов", img: "6/6a/Tarot_Cards_-_Page_of_Wands.jpg" },
+            { name: "Рыцарь Жезлов", img: "1/16/Tarot_Cards_-_Knight_of_Wands.jpg" },
+            { name: "Королева Жезлов", img: "0/0d/Tarot_Cards_-_Queen_of_Wands.jpg" },
+            { name: "Король Жезлов", img: "c/ce/Tarot_Cards_-_King_of_Wands.jpg" },
+
+            // Кубки
+            { name: "Туз Кубков", img: "3/36/Tarot_Cards_-_Ace_of_Cups.jpg" },
+            { name: "2 Кубков", img: "f/f8/Tarot_Cards_-_2_of_Cups.jpg" },
+            { name: "3 Кубков", img: "3/39/Tarot_Cards_-_3_of_Cups.jpg" },
+            { name: "4 Кубков", img: "3/35/Tarot_Cards_-_4_of_Cups.jpg" },
+            { name: "5 Кубков", img: "d/d7/Tarot_Cards_-_5_of_Cups.jpg" },
+            { name: "6 Кубков", img: "1/17/Tarot_Cards_-_6_of_Cups.jpg" },
+            { name: "7 Кубков", img: "a/ae/Tarot_Cards_-_7_of_Cups.jpg" },
+            { name: "8 Кубков", img: "6/60/Tarot_Cards_-_8_of_Cups.jpg" },
+            { name: "9 Кубков", img: "2/24/Tarot_Cards_-_9_of_Cups.jpg" },
+            { name: "10 Кубков", img: "8/84/Tarot_Cards_-_10_of_Cups.jpg" },
+            { name: "Паж Кубков", img: "a/ad/Tarot_Cards_-_Page_of_Cups.jpg" },
+            { name: "Рыцарь Кубков", img: "f/fa/Tarot_Cards_-_Knight_of_Cups.jpg" },
+            { name: "Королева Кубков", img: "6/62/Tarot_Cards_-_Queen_of_Cups.jpg" },
+            { name: "Король Кубков", img: "0/04/Tarot_Cards_-_King_of_Cups.jpg" },
+
+            // Мечи
+            { name: "Туз Мечей", img: "1/1a/Tarot_Cards_-_Ace_of_Swords.jpg" },
+            { name: "2 Мечей", img: "9/9e/Tarot_Cards_-_2_of_Swords.jpg" },
+            { name: "3 Мечей", img: "0/02/Tarot_Cards_-_3_of_Swords.jpg" },
+            { name: "4 Мечей", img: "b/bf/Tarot_Cards_-_4_of_Swords.jpg" },
+            { name: "5 Мечей", img: "2/23/Tarot_Cards_-_5_of_Swords.jpg" },
+            { name: "6 Мечей", img: "2/29/Tarot_Cards_-_6_of_Swords.jpg" },
+            { name: "7 Мечей", img: "3/34/Tarot_Cards_-_7_of_Swords.jpg" },
+            { name: "8 Мечей", img: "a/a7/Tarot_Cards_-_8_of_Swords.jpg" },
+            { name: "9 Мечей", img: "2/2f/Tarot_Cards_-_9_of_Swords.jpg" },
+            { name: "10 Мечей", img: "d/d4/Tarot_Cards_-_10_of_Swords.jpg" },
+            { name: "Паж Мечей", img: "4/4c/Tarot_Cards_-_Page_of_Swords.jpg" },
+            { name: "Рыцарь Мечей", img: "b/b0/Tarot_Cards_-_Knight_of_Swords.jpg" },
+            { name: "Королева Мечей", img: "d/d4/Tarot_Cards_-_Queen_of_Swords.jpg" },
+            { name: "Король Мечей", img: "3/33/Tarot_Cards_-_King_of_Swords.jpg" },
+
+            // Пентакли
+            { name: "Туз Пентаклей", img: "f/fd/Tarot_Cards_-_Ace_of_Pentacles.jpg" },
+            { name: "2 Пентаклей", img: "9/9f/Tarot_Cards_-_2_of_Pentacles.jpg" },
+            { name: "3 Пентаклей", img: "4/42/Tarot_Cards_-_3_of_Pentacles.jpg" },
+            { name: "4 Пентаклей", img: "3/35/Tarot_Cards_-_4_of_Pentacles.jpg" },
+            { name: "5 Пентаклей", img: "9/96/Tarot_Cards_-_5_of_Pentacles.jpg" },
+            { name: "6 Пентаклей", img: "a/a6/Tarot_Cards_-_6_of_Pentacles.jpg" },
+            { name: "7 Пентаклей", img: "8/8a/Tarot_Cards_-_7_of_Pentacles.jpg" },
+            { name: "8 Пентаклей", img: "4/49/Tarot_Cards_-_8_of_Pentacles.jpg" },
+            { name: "9 Пентаклей", img: "f/f0/Tarot_Cards_-_9_of_Pentacles.jpg" },
+            { name: "10 Пентаклей", img: "3/3f/Tarot_Cards_-_10_of_Pentacles.jpg" },
+            { name: "Паж Пентаклей", img: "e/ec/Tarot_Cards_-_Page_of_Pentacles.jpg" },
+            { name: "Рыцарь Пентаклей", img: "d/d5/Tarot_Cards_-_Knight_of_Pentacles.jpg" },
+            { name: "Королева Пентаклей", img: "8/88/Tarot_Cards_-_Queen_of_Pentacles.jpg" },
+            { name: "Король Пентаклей", img: "1/1c/Tarot_Cards_-_King_of_Pentacles.jpg" }
         ];
 
-        // Добавляем Младшие Арканы (Жезлы, Кубки, Мечи, Пентакли)
-        const suits = [
-            { id: "Wands", ru: "Жезлов", paths: ["1/11/Tarot_Cards_-_Ace_of_Wands.jpg", "0/0f/Tarot_Cards_-_2_of_Wands.jpg", "f/ff/Tarot_Cards_-_3_of_Wands.jpg", "a/a4/Tarot_Cards_-_4_of_Wands.jpg", "9/9d/Tarot_Cards_-_5_of_Wands.jpg", "3/3b/Tarot_Cards_-_6_of_Wands.jpg", "e/e4/Tarot_Cards_-_7_of_Wands.jpg", "6/6b/Tarot_Cards_-_8_of_Wands.jpg", "4/4d/Tarot_Cards_-_9_of_Wands.jpg", "0/0b/Tarot_Cards_-_10_of_Wands.jpg", "6/6a/Tarot_Cards_-_Page_of_Wands.jpg", "1/16/Tarot_Cards_-_Knight_of_Wands.jpg", "0/0d/Tarot_Cards_-_Queen_of_Wands.jpg", "c/ce/Tarot_Cards_-_King_of_Wands.jpg"] },
-            { id: "Cups", ru: "Кубков", paths: ["3/36/Tarot_Cards_-_Ace_of_Cups.jpg", "f/f8/Tarot_Cards_-_2_of_Cups.jpg", "3/39/Tarot_Cards_-_3_of_Cups.jpg", "3/35/Tarot_Cards_-_4_of_Cups.jpg", "d/d7/Tarot_Cards_-_5_of_Cups.jpg", "1/17/Tarot_Cards_-_6_of_Cups.jpg", "a/ae/Tarot_Cards_-_7_of_Cups.jpg", "6/60/Tarot_Cards_-_8_of_Cups.jpg", "2/24/Tarot_Cards_-_9_of_Cups.jpg", "8/84/Tarot_Cards_-_10_of_Cups.jpg", "a/ad/Tarot_Cards_-_Page_of_Cups.jpg", "f/fa/Tarot_Cards_-_Knight_of_Cups.jpg", "6/62/Tarot_Cards_-_Queen_of_Cups.jpg", "0/04/Tarot_Cards_-_King_of_Cups.jpg"] },
-            { id: "Swords", ru: "Мечей", paths: ["1/1a/Tarot_Cards_-_Ace_of_Swords.jpg", "9/9e/Tarot_Cards_-_2_of_Swords.jpg", "0/02/Tarot_Cards_-_3_of_Swords.jpg", "b/bf/Tarot_Cards_-_4_of_Swords.jpg", "2/23/Tarot_Cards_-_5_of_Swords.jpg", "2/29/Tarot_Cards_-_6_of_Swords.jpg", "3/34/Tarot_Cards_-_7_of_Swords.jpg", "a/a7/Tarot_Cards_-_8_of_Swords.jpg", "2/2f/Tarot_Cards_-_9_of_Swords.jpg", "d/d4/Tarot_Cards_-_10_of_Swords.jpg", "4/4c/Tarot_Cards_-_Page_of_Swords.jpg", "b/b0/Tarot_Cards_-_Knight_of_Swords.jpg", "d/d4/Tarot_Cards_-_Queen_of_Swords.jpg", "3/33/Tarot_Cards_-_King_of_Swords.jpg"] },
-            { id: "Pents", ru: "Пентаклей", paths: ["f/fd/Tarot_Cards_-_Ace_of_Pentacles.jpg", "9/9f/Tarot_Cards_-_2_of_Pentacles.jpg", "4/42/Tarot_Cards_-_3_of_Pentacles.jpg", "3/35/Tarot_Cards_-_4_of_Pentacles.jpg", "9/96/Tarot_Cards_-_5_of_Pentacles.jpg", "a/a6/Tarot_Cards_-_6_of_Pentacles.jpg", "8/8a/Tarot_Cards_-_7_of_Pentacles.jpg", "4/49/Tarot_Cards_-_8_of_Pentacles.jpg", "f/f0/Tarot_Cards_-_9_of_Pentacles.jpg", "3/3f/Tarot_Cards_-_10_of_Pentacles.jpg", "e/ec/Tarot_Cards_-_Page_of_Pentacles.jpg", "d/d5/Tarot_Cards_-_Knight_of_Pentacles.jpg", "8/88/Tarot_Cards_-_Queen_of_Pentacles.jpg", "1/1c/Tarot_Cards_-_King_of_Pentacles.jpg"] }
-        ];
-
-        const names = ["Туз", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Паж", "Рыцарь", "Королева", "Король"];
-
-        suits.forEach(suit => {
-            suit.paths.forEach((path, i) => {
-                deck.push({ name: `${names[i]} ${suit.ru}`, img: path });
-            });
-        });
-
-        // 5 случайных карт
         const shuffled = deck.sort(() => 0.5 - Math.random()).slice(0, 5);
         let selected = [];
         const grid = document.getElementById('grid');
@@ -185,8 +226,9 @@
 
         btn.onclick = async () => {
             btn.disabled = true;
-            btn.innerText = "СОХРАНЯЕМ...";
+            btn.innerText = "ОТПРАВЛЯЕМ...";
             const userId = tg.initDataUnsafe?.user?.id || "test_user";
+            // Твоя ссылка на скрипт
             const scriptURL = "https://script.google.com/macros/s/AKfycbyD0tPoh7h1YNWAiASIyux-FiQKGO6aZidwS7ltlk991ve1_NGJpoPF46IuUp6maDbJ/exec";
             await fetch(`${scriptURL}?user_id=${userId}&cards=${encodeURIComponent(selected.join(", "))}`, { mode: 'no-cors' });
             tg.close();
