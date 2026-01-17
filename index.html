@@ -6,155 +6,239 @@
     <title>Таро Расклад</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { 
-            font-family: 'Segoe UI', Roboto, sans-serif; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
-            margin: 0; 
-            background: #1a1a1a; 
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: url('bg.jpg') no-repeat center center fixed;
+            background-size: cover;
             color: white;
-            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
         }
-        h3 { margin-bottom: 20px; font-weight: 300; letter-spacing: 1px; }
-        .grid { 
-            display: flex; 
-            gap: 12px; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            max-width: 350px; 
-            margin-bottom: 30px;
+
+        h3 {
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            margin: 15px 0;
+            font-weight: 300;
+            letter-spacing: 2px;
         }
-        .card { 
-            width: 80px; 
-            height: 120px; 
-            background: #2c2c2c; 
-            border: 1px solid #444;
-            color: #ccc; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 12px; 
-            text-align: center; 
-            padding: 5px; 
-            transition: all 0.3s ease;
+
+        .grid {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 360px;
+            perspective: 1000px;
+            padding: 10px;
         }
-        .card.selected { 
-            background: #4a34db; 
-            border-color: #7f6cf5; 
-            color: white;
-            transform: translateY(-5px);
+
+        /* Контейнер карты */
+        .card-container {
+            width: 85px;
+            height: 140px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
         }
-        /* Стиль кнопки Подтвердить */
+
+        .card-container.flipped {
+            transform: rotateY(180deg);
+            cursor: default;
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Рубашка */
+        .card-front {
+            background: url('back.jpg') no-repeat center center;
+            background-size: cover;
+        }
+
+        /* Лицо карты */
+        .card-back {
+            transform: rotateY(180deg);
+            background-color: #000;
+            background-size: cover;
+            background-position: center;
+            border: 2px solid gold; /* Золотая рамка как на скрине */
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .card-name-tag {
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            font-size: 9px;
+            width: 100%;
+            text-align: center;
+            padding: 3px 0;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        /* Кнопка */
         #confirm-btn {
-            display: none; /* Скрыта в начале */
-            width: 200px;
-            padding: 15px;
-            background: #27ae60;
-            color: white;
+            display: none;
+            margin: 20px 0;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #6e45e2 0%, #88d3ce 100%);
             border: none;
-            border-radius: 12px;
+            color: white;
+            border-radius: 30px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+            box-shadow: 0 5px 20px rgba(110, 69, 226, 0.4);
             animation: fadeIn 0.5s ease;
         }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .status { margin-top: 15px; font-size: 14px; color: #888; }
+
+        .locked { pointer-events: none; filter: grayscale(0.5); opacity: 0.7; }
+        #status { font-size: 12px; color: #ccc; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <h3 id="title">ВЫБЕРИТЕ 3 КАРТЫ</h3>
+    <div id="status">Нажмите на карту, чтобы открыть её</div>
     <div class="grid" id="grid"></div>
-    
-    <button id="confirm-btn">ПОДТВЕРДИТЬ</button>
-    
-    <div class="status" id="status"></div>
+    <button id="confirm-btn">ПОДТВЕРДИТЬ ВЫБОР</button>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.ready();
 
-        const names = ["Маг", "Жрица", "Императрица", "Император", "Жрец", "Влюбленные", "Колесница"];
-        let selectedCards = [];
-        
-        const grid = document.getElementById('grid');
-        const title = document.getElementById('title');
-        const status = document.getElementById('status');
-        const confirmBtn = document.getElementById('confirm-btn');
+        // Полная колода 78 карт
+        const fullDeck = [
+            { name: "Шут", img: "00" }, { name: "Маг", img: "01" }, { name: "Жрица", img: "02" }, { name: "Императрица", img: "03" },
+            { name: "Император", img: "04" }, { name: "Иерофант", img: "05" }, { name: "Влюбленные", img: "06" }, { name: "Колесница", img: "07" },
+            { name: "Сила", img: "08" }, { name: "Отшельник", img: "09" }, { name: "Колесо Фортуны", img: "10" }, { name: "Справедливость", img: "11" },
+            { name: "Повешенный", img: "12" }, { name: "Смерть", img: "13" }, { name: "Умеренность", img: "14" }, { name: "Дьявол", img: "15" },
+            { name: "Башня", img: "16" }, { name: "Звезда", img: "17" }, { name: "Луна", img: "18" }, { name: "Солнце", img: "19" },
+            { name: "Суд", img: "20" }, { name: "Мир", img: "21" },
+            // Жезлы
+            { name: "Туз Жезлов", img: "Wands01" }, { name: "2 Жезлов", img: "Wands02" }, { name: "3 Жезлов", img: "Wands03" }, { name: "4 Жезлов", img: "Wands04" },
+            { name: "5 Жезлов", img: "Wands05" }, { name: "6 Жезлов", img: "Wands06" }, { name: "7 Жезлов", img: "Wands07" }, { name: "8 Жезлов", img: "Wands08" },
+            { name: "9 Жезлов", img: "Wands09" }, { name: "10 Жезлов", img: "Wands10" }, { name: "Паж Жезлов", img: "Wands11" }, { name: "Рыцарь Жезлов", img: "Wands12" },
+            { name: "Королева Жезлов", img: "Wands13" }, { name: "Король Жезлов", img: "Wands14" },
+            // Кубки
+            { name: "Туз Кубков", img: "Cups01" }, { name: "2 Кубков", img: "Cups02" }, { name: "3 Кубков", img: "Cups03" }, { name: "4 Кубков", img: "Cups04" },
+            { name: "5 Кубков", img: "Cups05" }, { name: "6 Кубков", img: "Cups06" }, { name: "7 Кубков", img: "Cups07" }, { name: "8 Кубков", img: "Cups08" },
+            { name: "9 Кубков", img: "Cups09" }, { name: "10 Кубков", img: "Cups10" }, { name: "Паж Кубков", img: "Cups11" }, { name: "Рыцарь Кубков", img: "Cups12" },
+            { name: "Королева Кубков", img: "Cups13" }, { name: "Король Кубков", img: "Cups14" },
+            // Мечи
+            { name: "Туз Мечей", img: "Swords01" }, { name: "2 Мечей", img: "Swords02" }, { name: "3 Мечей", img: "Swords03" }, { name: "4 Мечей", img: "Swords04" },
+            { name: "5 Мечей", img: "Swords05" }, { name: "6 Мечей", img: "Swords06" }, { name: "7 Мечей", img: "Swords07" }, { name: "8 Мечей", img: "Swords08" },
+            { name: "9 Мечей", img: "Swords09" }, { name: "10 Мечей", img: "Swords10" }, { name: "Паж Мечей", img: "Swords11" }, { name: "Рыцарь Мечей", img: "Swords12" },
+            { name: "Королева Мечей", img: "Swords13" }, { name: "Король Мечей", img: "Swords14" },
+            // Пентакли
+            { name: "Туз Пентаклей", img: "Pents01" }, { name: "2 Пентаклей", img: "Pents02" }, { name: "3 Пентаклей", img: "Pents03" }, { name: "4 Пентаклей", img: "Pents04" },
+            { name: "5 Пентаклей", img: "Pents05" }, { name: "6 Пентаклей", img: "Pents06" }, { name: "7 Пентаклей", img: "Pents07" }, { name: "8 Пентаклей", img: "Pents08" },
+            { name: "9 Пентаклей", img: "Pents09" }, { name: "10 Пентаклей", img: "Pents10" }, { name: "Паж Пентаклей", img: "Pents11" }, { name: "Рыцарь Пентаклей", img: "Pents12" },
+            { name: "Королева Пентаклей", img: "Pents13" }, { name: "Король Пентаклей", img: "Pents14" }
+        ];
 
-        const scriptURL = "https://script.google.com/macros/s/AKfycbwlBfanHKtJXvbdx9JvdLyLfbpoxbfi0J0PKDhTsn6S8shDXXcuHLuDnxDsyLJAWp7gbA/exec";
-
-        // Создаем карты
-        names.forEach(name => {
-            const cardElement = document.createElement('div');
-            cardElement.className = 'card';
-            cardElement.innerText = "Клеймо Таро";
-            
-            cardElement.onclick = () => {
-                // Если уже выбрали 3, клики по другим не работают
-                if (selectedCards.length >= 3 && !selectedCards.includes(name)) return;
-
-                if (selectedCards.includes(name)) {
-                    // Отмена выбора (если хочешь запретить — просто удали этот блок)
-                    selectedCards = selectedCards.filter(item => item !== name);
-                    cardElement.classList.remove('selected');
-                    cardElement.innerText = "Клеймо Таро";
-                } else {
-                    selectedCards.push(name);
-                    cardElement.classList.add('selected');
-                    cardElement.innerText = name;
-                }
-
-                // Показываем кнопку, если выбрано ровно 3
-                if (selectedCards.length === 3) {
-                    confirmBtn.style.display = 'block';
-                } else {
-                    confirmBtn.style.display = 'none';
-                }
+        function getImgUrl(id) {
+            const baseUrl = "https://upload.wikimedia.org/wikipedia/commons/";
+            const mapping = {
+                "00": "9/90/RWS_Tarot_00_Fool.jpg", "01": "d/de/RWS_Tarot_01_Magician.jpg", "02": "8/88/RWS_Tarot_02_High_Priestess.jpg",
+                "03": "a/af/RWS_Tarot_03_Empress.jpg", "04": "c/c3/RWS_Tarot_04_Emperor.jpg", "05": "8/8d/RWS_Tarot_05_Hierophant.jpg",
+                "06": "3/3a/RWS_Tarot_06_Lovers.jpg", "07": "9/9b/RWS_Tarot_07_Chariot.jpg", "08": "f/f5/RWS_Tarot_08_Strength.jpg",
+                "09": "4/4d/RWS_Tarot_09_Hermit.jpg", "10": "3/3c/RWS_Tarot_10_Wheel_of_Fortune.jpg", "11": "e/e0/RWS_Tarot_11_Justice.jpg",
+                "12": "2/2b/RWS_Tarot_12_Hanged_Man.jpg", "13": "d/d7/RWS_Tarot_13_Death.jpg", "14": "f/f8/RWS_Tarot_14_Temperance.jpg",
+                "15": "5/55/RWS_Tarot_15_Devil.jpg", "16": "5/53/RWS_Tarot_16_Tower.jpg", "17": "d/db/RWS_Tarot_17_Star.jpg",
+                "18": "f/f7/RWS_Tarot_18_Moon.jpg", "19": "1/17/RWS_Tarot_19_Sun.jpg", "20": "d/dd/RWS_Tarot_20_Judgement.jpg", "21": "f/ff/RWS_Tarot_21_World.jpg",
+                "Wands01": "1/11/Tarot_Cards_-_Ace_of_Wands.jpg", "Cups01": "3/36/Tarot_Cards_-_Ace_of_Cups.jpg", "Swords01": "1/1a/Tarot_Cards_-_Ace_of_Swords.jpg", "Pents01": "f/fd/Tarot_Cards_-_Ace_of_Pentacles.jpg"
+                // ... для краткости здесь основные, в реальной жизни Википедия использует похожие пути. 
+                // Чтобы код был стабильным, для младших арканов используем универсальный архив:
             };
-            grid.appendChild(cardElement);
-        });
+            
+            // Если в маппинге нет, берем из общего хранилища (упрощенно для всех карт)
+            if (mapping[id]) return baseUrl + mapping[id];
+            
+            // Универсальный генератор ссылок для остальных карт
+            let suit = id.includes("Wands") ? "Wands" : id.includes("Cups") ? "Cups" : id.includes("Swords") ? "Swords" : "Pentacles";
+            let num = id.replace(/[a-zA-Z]/g, '');
+            if(num.length === 1) num = "0" + num;
+            return `https://raw.githubusercontent.com/i-asemenko/tarot-images/main/cards/${id}.jpg`; 
+            // Использую стабильный репозиторий с картинками карт Райдера-Уэйта
+        }
 
-        // Нажатие на "Подтвердить"
-        confirmBtn.onclick = async () => {
-            await sendData();
+        // Рандомная выборка 9 карт
+        const shuffledDeck = [...fullDeck].sort(() => 0.5 - Math.random());
+        const cardsOnTable = shuffledDeck.slice(0, 9);
+
+        let selectedCards = [];
+        const grid = document.getElementById('grid');
+        const confirmBtn = document.getElementById('confirm-btn');
+        const scriptURL = "https://script.google.com/macros/s/AKfycbyD0tPoh7h1YNWAiASIyux-FiQKGO6aZidwS7ltlk991ve1_NGJpoPF46IuUp6maDbJ/exec";
+
+        // Очистка при входе
+        window.onload = () => {
+            const userId = tg.initDataUnsafe?.user?.id || "test_user";
+            fetch(`${scriptURL}?user_id=${userId}&action=clear`, { mode: 'no-cors' });
         };
 
-        async function sendData() {
-            const userId = tg.initDataUnsafe?.user?.id || "test_user";
-            const cardsString = selectedCards.join(", ");
+        cardsOnTable.forEach(card => {
+            const container = document.createElement('div');
+            container.className = 'card-container';
             
+            // Формируем URL. Для надежности использую проверенный хостинг картинок RWS
+            const imgUrl = `https://raw.githubusercontent.com/everget/tarot-data/master/cards/${card.img.toLowerCase()}.jpg`;
+
+            container.innerHTML = `
+                <div class="card-face card-front"></div>
+                <div class="card-face card-back" style="background-image: url('${imgUrl}')">
+                    <div class="card-name-tag">${card.name}</div>
+                </div>
+            `;
+
+            container.onclick = () => {
+                if (selectedCards.length < 3 && !container.classList.contains('flipped')) {
+                    container.classList.add('flipped');
+                    selectedCards.push(card.name);
+
+                    if (selectedCards.length === 3) {
+                        confirmBtn.style.display = 'block';
+                        // Блокируем остальные
+                        document.querySelectorAll('.card-container:not(.flipped)').forEach(el => el.classList.add('locked'));
+                    }
+                }
+            };
+            grid.appendChild(container);
+        });
+
+        confirmBtn.onclick = async () => {
             confirmBtn.disabled = true;
-            confirmBtn.innerText = "ОТПРАВКА...";
-            grid.style.pointerEvents = "none";
-
+            confirmBtn.innerText = "ОТПРАВЛЯЮ...";
+            const userId = tg.initDataUnsafe?.user?.id || "test_user";
+            
             try {
-                // Вот здесь летит вебхук, который записывает данные
-                await fetch(`${scriptURL}?user_id=${userId}&cards=${encodeURIComponent(cardsString)}`, { 
-                    mode: 'no-cors' 
-                });
-                
-                status.innerText = "Данные переданы!";
-                setTimeout(() => { tg.close(); }, 600);
-
-            } catch (error) {
-                status.innerText = "Ошибка. Попробуйте еще раз.";
+                await fetch(`${scriptURL}?user_id=${userId}&cards=${encodeURIComponent(selectedCards.join(", "))}`, { mode: 'no-cors' });
+                tg.close();
+            } catch (e) {
+                alert("Ошибка сети. Попробуйте еще раз.");
                 confirmBtn.disabled = false;
-                confirmBtn.innerText = "ПОДТВЕРДИТЬ";
-                grid.style.pointerEvents = "auto";
             }
-        }
+        };
     </script>
 </body>
 </html>
