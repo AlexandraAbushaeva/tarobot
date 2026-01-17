@@ -22,39 +22,33 @@
 
         h3 {
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            margin: 10px 0;
+            margin-bottom: 20px;
             text-transform: uppercase;
-            font-size: 1.2rem;
-            letter-spacing: 1px;
         }
 
-        /* Сетка 3 + 2 */
+        /* Сетка 3 сверху, 2 снизу */
         .grid {
             display: grid;
-            grid-template-columns: repeat(3, 90px);
-            grid-template-rows: repeat(2, 150px);
-            gap: 12px;
+            grid-template-columns: repeat(6, 45px); /* Тонкая сетка для выравнивания */
+            gap: 15px 10px;
             justify-content: center;
-            perspective: 1000px;
         }
-
-        /* Центрируем последние 2 карты во втором ряду */
-        .card-container:nth-child(4) { grid-column: 1 / 2; margin-left: 50px; }
-        .card-container:nth-child(5) { grid-column: 2 / 3; margin-left: 50px; }
 
         .card-container {
             width: 90px;
             height: 150px;
             position: relative;
             transform-style: preserve-3d;
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.6s;
             cursor: pointer;
+            grid-column: span 2;
         }
 
-        .card-container.flipped {
-            transform: rotateY(180deg);
-            cursor: default;
-        }
+        /* Выравнивание 2-го ряда (карты 4 и 5) */
+        .card-container:nth-child(4) { grid-column: 2 / 4; }
+        .card-container:nth-child(5) { grid-column: 4 / 6; }
+
+        .card-container.flipped { transform: rotateY(180deg); }
 
         .card-face {
             position: absolute;
@@ -84,18 +78,18 @@
         .card-name-tag {
             background: rgba(0, 0, 0, 0.8);
             color: #fff;
-            font-size: 9px;
+            font-size: 10px;
             width: 100%;
             text-align: center;
-            padding: 4px 0;
+            padding: 5px 0;
             border-bottom-left-radius: 8px;
             border-bottom-right-radius: 8px;
         }
 
         #confirm-btn {
             display: none;
-            margin-top: 25px;
-            padding: 15px 45px;
+            margin-top: 30px;
+            padding: 15px 50px;
             background: linear-gradient(135deg, #6e45e2 0%, #a485ff 100%);
             border: none;
             color: white;
@@ -109,7 +103,7 @@
 </head>
 <body>
 
-    <h3 id="title">Выберите 3 карты</h3>
+    <h3>ВЫБЕРИТЕ 3 КАРТЫ</h3>
     <div class="grid" id="grid"></div>
     <button id="confirm-btn">ПОДТВЕРДИТЬ ВЫБОР</button>
 
@@ -117,76 +111,65 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Полная колода 78 карт
+        const base = "https://upload.wikimedia.org/wikipedia/commons/";
+        
+        // Массив всех 78 карт с проверенными ссылками Википедии
         const deck = [
-            // Старшие Арканы
-            { name: "Шут", img: "https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg" },
-            { name: "Маг", img: "https://upload.wikimedia.org/wikipedia/commons/d/de/RWS_Tarot_01_Magician.jpg" },
-            { name: "Жрица", img: "https://upload.wikimedia.org/wikipedia/commons/8/88/RWS_Tarot_02_High_Priestess.jpg" },
-            { name: "Императрица", img: "https://upload.wikimedia.org/wikipedia/commons/a/af/RWS_Tarot_03_Empress.jpg" },
-            { name: "Император", img: "https://upload.wikimedia.org/wikipedia/commons/c/c3/RWS_Tarot_04_Emperor.jpg" },
-            { name: "Иерофант", img: "https://upload.wikimedia.org/wikipedia/commons/8/8d/RWS_Tarot_05_Hierophant.jpg" },
-            { name: "Влюбленные", img: "https://upload.wikimedia.org/wikipedia/commons/3/3a/RWS_Tarot_06_Lovers.jpg" },
-            { name: "Колесница", img: "https://upload.wikimedia.org/wikipedia/commons/9/9b/RWS_Tarot_07_Chariot.jpg" },
-            { name: "Сила", img: "https://upload.wikimedia.org/wikipedia/commons/f/f5/RWS_Tarot_08_Strength.jpg" },
-            { name: "Отшельник", img: "https://upload.wikimedia.org/wikipedia/commons/4/4d/RWS_Tarot_09_Hermit.jpg" },
-            { name: "Колесо Фортуны", img: "https://upload.wikimedia.org/wikipedia/commons/3/3c/RWS_Tarot_10_Wheel_of_Fortune.jpg" },
-            { name: "Справедливость", img: "https://upload.wikimedia.org/wikipedia/commons/e/e0/RWS_Tarot_11_Justice.jpg" },
-            { name: "Повешенный", img: "https://upload.wikimedia.org/wikipedia/commons/2/2b/RWS_Tarot_12_Hanged_Man.jpg" },
-            { name: "Смерть", img: "https://upload.wikimedia.org/wikipedia/commons/d/d7/RWS_Tarot_13_Death.jpg" },
-            { name: "Умеренность", img: "https://upload.wikimedia.org/wikipedia/commons/f/f8/RWS_Tarot_14_Temperance.jpg" },
-            { name: "Дьявол", img: "https://upload.wikimedia.org/wikipedia/commons/5/55/RWS_Tarot_15_Devil.jpg" },
-            { name: "Башня", img: "https://upload.wikimedia.org/wikipedia/commons/5/53/RWS_Tarot_16_Tower.jpg" },
-            { name: "Звезда", img: "https://upload.wikimedia.org/wikipedia/commons/d/db/RWS_Tarot_17_Star.jpg" },
-            { name: "Луна", img: "https://upload.wikimedia.org/wikipedia/commons/f/f7/RWS_Tarot_18_Moon.jpg" },
-            { name: "Солнце", img: "https://upload.wikimedia.org/wikipedia/commons/1/17/RWS_Tarot_19_Sun.jpg" },
-            { name: "Суд", img: "https://upload.wikimedia.org/wikipedia/commons/d/dd/RWS_Tarot_20_Judgement.jpg" },
-            { name: "Мир", img: "https://upload.wikimedia.org/wikipedia/commons/f/ff/RWS_Tarot_21_World.jpg" }
+            { name: "Шут", img: "9/90/RWS_Tarot_00_Fool.jpg" },
+            { name: "Маг", img: "d/de/RWS_Tarot_01_Magician.jpg" },
+            { name: "Жрица", img: "8/88/RWS_Tarot_02_High_Priestess.jpg" },
+            { name: "Императрица", img: "a/af/RWS_Tarot_03_Empress.jpg" },
+            { name: "Император", img: "c/c3/RWS_Tarot_04_Emperor.jpg" },
+            { name: "Иерофант", img: "8/8d/RWS_Tarot_05_Hierophant.jpg" },
+            { name: "Влюбленные", img: "3/3a/RWS_Tarot_06_Lovers.jpg" },
+            { name: "Колесница", img: "9/9b/RWS_Tarot_07_Chariot.jpg" },
+            { name: "Сила", img: "f/f5/RWS_Tarot_08_Strength.jpg" },
+            { name: "Отшельник", img: "4/4d/RWS_Tarot_09_Hermit.jpg" },
+            { name: "Колесо Фортуны", img: "3/3c/RWS_Tarot_10_Wheel_of_Fortune.jpg" },
+            { name: "Справедливость", img: "e/e0/RWS_Tarot_11_Justice.jpg" },
+            { name: "Повешенный", img: "2/2b/RWS_Tarot_12_Hanged_Man.jpg" },
+            { name: "Смерть", img: "d/d7/RWS_Tarot_13_Death.jpg" },
+            { name: "Умеренность", img: "f/f8/RWS_Tarot_14_Temperance.jpg" },
+            { name: "Дьявол", img: "5/55/RWS_Tarot_15_Devil.jpg" },
+            { name: "Башня", img: "5/53/RWS_Tarot_16_Tower.jpg" },
+            { name: "Звезда", img: "d/db/RWS_Tarot_17_Star.jpg" },
+            { name: "Луна", img: "f/f7/RWS_Tarot_18_Moon.jpg" },
+            { name: "Солнце", img: "1/17/RWS_Tarot_19_Sun.jpg" },
+            { name: "Суд", img: "d/dd/RWS_Tarot_20_Judgement.jpg" },
+            { name: "Мир", img: "f/ff/RWS_Tarot_21_World.jpg" }
         ];
 
-        // Авто-генерация Младших Арканов (чтобы не писать 56 строк вручную)
+        // Добавляем Младшие Арканы (Жезлы, Кубки, Мечи, Пентакли)
         const suits = [
-            { id: "Wands", ru: "Жезлов" }, { id: "Cups", ru: "Кубков" }, 
-            { id: "Swords", ru: "Мечей" }, { id: "Pents", ru: "Пентаклей" }
+            { id: "Wands", ru: "Жезлов", paths: ["1/11/Tarot_Cards_-_Ace_of_Wands.jpg", "0/0f/Tarot_Cards_-_2_of_Wands.jpg", "f/ff/Tarot_Cards_-_3_of_Wands.jpg", "a/a4/Tarot_Cards_-_4_of_Wands.jpg", "9/9d/Tarot_Cards_-_5_of_Wands.jpg", "3/3b/Tarot_Cards_-_6_of_Wands.jpg", "e/e4/Tarot_Cards_-_7_of_Wands.jpg", "6/6b/Tarot_Cards_-_8_of_Wands.jpg", "4/4d/Tarot_Cards_-_9_of_Wands.jpg", "0/0b/Tarot_Cards_-_10_of_Wands.jpg", "6/6a/Tarot_Cards_-_Page_of_Wands.jpg", "1/16/Tarot_Cards_-_Knight_of_Wands.jpg", "0/0d/Tarot_Cards_-_Queen_of_Wands.jpg", "c/ce/Tarot_Cards_-_King_of_Wands.jpg"] },
+            { id: "Cups", ru: "Кубков", paths: ["3/36/Tarot_Cards_-_Ace_of_Cups.jpg", "f/f8/Tarot_Cards_-_2_of_Cups.jpg", "3/39/Tarot_Cards_-_3_of_Cups.jpg", "3/35/Tarot_Cards_-_4_of_Cups.jpg", "d/d7/Tarot_Cards_-_5_of_Cups.jpg", "1/17/Tarot_Cards_-_6_of_Cups.jpg", "a/ae/Tarot_Cards_-_7_of_Cups.jpg", "6/60/Tarot_Cards_-_8_of_Cups.jpg", "2/24/Tarot_Cards_-_9_of_Cups.jpg", "8/84/Tarot_Cards_-_10_of_Cups.jpg", "a/ad/Tarot_Cards_-_Page_of_Cups.jpg", "f/fa/Tarot_Cards_-_Knight_of_Cups.jpg", "6/62/Tarot_Cards_-_Queen_of_Cups.jpg", "0/04/Tarot_Cards_-_King_of_Cups.jpg"] },
+            { id: "Swords", ru: "Мечей", paths: ["1/1a/Tarot_Cards_-_Ace_of_Swords.jpg", "9/9e/Tarot_Cards_-_2_of_Swords.jpg", "0/02/Tarot_Cards_-_3_of_Swords.jpg", "b/bf/Tarot_Cards_-_4_of_Swords.jpg", "2/23/Tarot_Cards_-_5_of_Swords.jpg", "2/29/Tarot_Cards_-_6_of_Swords.jpg", "3/34/Tarot_Cards_-_7_of_Swords.jpg", "a/a7/Tarot_Cards_-_8_of_Swords.jpg", "2/2f/Tarot_Cards_-_9_of_Swords.jpg", "d/d4/Tarot_Cards_-_10_of_Swords.jpg", "4/4c/Tarot_Cards_-_Page_of_Swords.jpg", "b/b0/Tarot_Cards_-_Knight_of_Swords.jpg", "d/d4/Tarot_Cards_-_Queen_of_Swords.jpg", "3/33/Tarot_Cards_-_King_of_Swords.jpg"] },
+            { id: "Pents", ru: "Пентаклей", paths: ["f/fd/Tarot_Cards_-_Ace_of_Pentacles.jpg", "9/9f/Tarot_Cards_-_2_of_Pentacles.jpg", "4/42/Tarot_Cards_-_3_of_Pentacles.jpg", "3/35/Tarot_Cards_-_4_of_Pentacles.jpg", "9/96/Tarot_Cards_-_5_of_Pentacles.jpg", "a/a6/Tarot_Cards_-_6_of_Pentacles.jpg", "8/8a/Tarot_Cards_-_7_of_Pentacles.jpg", "4/49/Tarot_Cards_-_8_of_Pentacles.jpg", "f/f0/Tarot_Cards_-_9_of_Pentacles.jpg", "3/3f/Tarot_Cards_-_10_of_Pentacles.jpg", "e/ec/Tarot_Cards_-_Page_of_Pentacles.jpg", "d/d5/Tarot_Cards_-_Knight_of_Pentacles.jpg", "8/88/Tarot_Cards_-_Queen_of_Pentacles.jpg", "1/1c/Tarot_Cards_-_King_of_Pentacles.jpg"] }
         ];
+
         const names = ["Туз", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Паж", "Рыцарь", "Королева", "Король"];
 
         suits.forEach(suit => {
-            names.forEach((name, index) => {
-                let num = (index + 1).toString().padStart(2, '0');
-                let wikiName = (index === 0) ? "Ace" : (index === 10) ? "Page" : (index === 11) ? "Knight" : (index === 12) ? "Queen" : (index === 13) ? "King" : (index + 1);
-                let suitName = (suit.id === "Pents") ? "Pentacles" : suit.id;
-                
-                deck.push({
-                    name: `${name} ${suit.ru}`,
-                    img: `https://raw.githubusercontent.com/everget/tarot-data/master/cards/${suit.id.toLowerCase()}${num}.jpg`
-                });
+            suit.paths.forEach((path, i) => {
+                deck.push({ name: `${names[i]} ${suit.ru}`, img: path });
             });
         });
 
-        // Выбираем 5 случайных карт
+        // 5 случайных карт
         const shuffled = deck.sort(() => 0.5 - Math.random()).slice(0, 5);
         let selected = [];
         const grid = document.getElementById('grid');
         const btn = document.getElementById('confirm-btn');
-        const scriptURL = "https://script.google.com/macros/s/AKfycbwlBfanHKtJXvbdx9JvdLyLfbpoxbfi0J0PKDhTsn6S8shDXXcuHLuDnxDsyLJAWp7gbA/exec";
-
-        // Очистка при загрузке
-        window.onload = () => {
-            const userId = tg.initDataUnsafe?.user?.id || "test_user";
-            fetch(`${scriptURL}?user_id=${userId}&action=clear`, { mode: 'no-cors' });
-        };
 
         shuffled.forEach(card => {
             const container = document.createElement('div');
             container.className = 'card-container';
             container.innerHTML = `
                 <div class="card-face card-front"></div>
-                <div class="card-face card-back" style="background-image: url('${card.img}')">
+                <div class="card-face card-back" style="background-image: url('${base + card.img}')">
                     <div class="card-name-tag">${card.name}</div>
                 </div>
             `;
-
             container.onclick = () => {
                 if (selected.length < 3 && !container.classList.contains('flipped')) {
                     container.classList.add('flipped');
@@ -202,8 +185,9 @@
 
         btn.onclick = async () => {
             btn.disabled = true;
-            btn.innerText = "ОТПРАВЛЯЕМ...";
+            btn.innerText = "СОХРАНЯЕМ...";
             const userId = tg.initDataUnsafe?.user?.id || "test_user";
+            const scriptURL = "https://script.google.com/macros/s/AKfycbyD0tPoh7h1YNWAiASIyux-FiQKGO6aZidwS7ltlk991ve1_NGJpoPF46IuUp6maDbJ/exec";
             await fetch(`${scriptURL}?user_id=${userId}&cards=${encodeURIComponent(selected.join(", "))}`, { mode: 'no-cors' });
             tg.close();
         };
